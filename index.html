@@ -1025,7 +1025,7 @@ async function doLogin(){
   const pwd = document.getElementById('admin-pwd-input').value.trim();
   if(!pwd){ document.getElementById('admin-modal-error').textContent='Introduce la contraseña'; return; }
   // Test password against the save endpoint with a dry-run GET
-  const res = await fetch('/api/save',{
+  const res = await fetch('/api/save?auth=1',{
     method:'GET',
     headers:{'x-admin-password':pwd}
   });
