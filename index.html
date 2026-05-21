@@ -218,10 +218,10 @@ header{
 /* ── NEW ROW-BASED BRACKET ── */
 .bracket-grid{
   display:grid;
-  /* col1=round labels | col2=16avos tie | col3=connector | col4=octavos | col5=connector | col6=cuartos | col7=connector | col8=semi | col9=final */
-  grid-template-columns: 130px 1fr 28px 1fr 28px 1fr 28px 1fr 1fr;
-  grid-template-rows: repeat(16, 1fr);
-  min-width: 1000px;
+  /* col1=labels | col2=16avos | col3=conn | col4=octavos | col5=conn | col6=cuartos | col7=conn | col8=semi | col9=final */
+  grid-template-columns: 80px 1.3fr 20px 1.3fr 20px 0.8fr 20px 0.7fr 0.7fr;
+  grid-template-rows: 36px repeat(16, minmax(80px,auto));
+  min-width: 1060px;
   gap:0;
   align-items:stretch;
 }
@@ -237,9 +237,10 @@ header{
 /* 16avos match card (shown on one row = one leg of the tie) */
 .bc-tie{
   background:var(--card2);border:1px solid var(--border);
-  border-radius:6px;margin:2px 3px;padding:5px 8px;
+  border-radius:6px;margin:2px 3px;padding:6px 8px;
   font-size:11px;transition:border-color 0.2s;
-  display:flex;flex-direction:column;justify-content:center;gap:2px;
+  display:flex;flex-direction:column;justify-content:flex-start;gap:2px;
+  overflow:hidden;
 }
 .bc-tie:hover{border-color:var(--accent)}
 .bc-tie.winner-card{border-color:var(--accent);background:rgba(0,229,160,0.06)}
@@ -291,25 +292,31 @@ header{
   top:50%;left:0;right:0;
   height:1px;background:var(--accent);opacity:0.25;
 }
-/* oct/cuartos/semi slot — spans 2 rows */
+/* oct/cuartos/semi/final slot — spans N rows, always centered */
+.bc-match-wrap{
+  display:flex;align-items:center;justify-content:center;
+  padding:4px 3px;
+}
 .bc-match{
   background:var(--card2);border:1px solid var(--border);
-  border-radius:8px;margin:3px;
+  border-radius:8px;width:100%;
   overflow:hidden;transition:border-color 0.2s;
   display:flex;flex-direction:column;
 }
 .bc-match:hover{border-color:var(--accent2)}
 .bc-match.played{border-color:rgba(0,229,160,0.4)}
 .bm-team{
-  flex:1;display:flex;justify-content:space-between;align-items:center;
-  padding:6px 10px;font-size:11px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+  padding:5px 9px;font-size:11px;border-bottom:1px solid var(--border);
 }
 .bm-team:last-child{border-bottom:none}
 .bm-team.winner{background:rgba(0,229,160,0.08);font-weight:700}
 .bm-team.pending{color:var(--muted)}
-.bm-score{font-family:'Bebas Neue';font-size:16px;color:var(--accent);min-width:22px;text-align:right}
-.bm-score.tbd{color:var(--muted);font-size:12px}
+.bm-score{font-family:'Bebas Neue';font-size:15px;color:var(--accent);min-width:20px;text-align:right}
+.bm-score.tbd{color:var(--muted);font-size:11px}
 .bm-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bm-date{font-size:9px;color:var(--muted);padding:3px 9px;border-bottom:1px solid var(--border);letter-spacing:0.5px}
+.bm-global{font-size:9px;color:var(--accent);padding:3px 9px;text-align:center;letter-spacing:0.5px}
 .round-spacer{display:flex;align-items:center;justify-content:center;padding:4px}
 
 /* Right-side connectors for oct→cuartos */
@@ -1291,34 +1298,74 @@ function renderBracket(){
     </div>`;
   }
 
-  // ── Build octavos match cell (spans 2 rows) ───────────────────────────────
-  // We collect which rows share the same oct_i to avoid duplicate rendering
+  // ── Build octavos match cell (spans 2 rows, shows IDA + VUELTA + global) ────
   const octRendered = new Set();
   function octCell(row, gridRow){
     const oi = row.oct_i;
-    if(octRendered.has(oi)) return '';  // already placed via grid-row-start
+    if(octRendered.has(oi)) return '';
     octRendered.add(oi);
-    const m = octMatch(oi);
-    const lW = m.played && m.totalLocal > m.totalVisit;
-    const vW = m.played && m.totalVisit > m.totalLocal;
-    const score = m.played
-      ? `${m.totalLocal}–${m.totalVisit}`
-      : `${m.idaR ? m.idaR.gl+'-'+m.idaR.gv : '?–?'}`;
-    // Find which two rows feed this match to know their grid positions
-    const feedRows = ROWS.reduce((acc,r,i)=>r.oct_i===oi?[...acc,i+2]:acc,[]); // +2 for header row
+    const m  = octMatch(oi);
+    const o  = OCTAVOS[oi];
+    if(!o) return '';
+
+    // Find grid rows this cell must span
+    const feedRows = ROWS.reduce((acc,r,i)=>r.oct_i===oi?[...acc,i+2]:acc,[]);
     const rStart = feedRows[0]||gridRow;
-    const rEnd   = (feedRows[1]||gridRow)+1;
-    return `<div class="bc-match ${m.played?'played':''}"
-      style="grid-column:4;grid-row:${rStart}/${rEnd+1};margin:3px">
-      <div class="bm-team ${lW?'winner':''} ${!m.played?'pending':''}">
-        <span class="bm-name">${short(m.local)}</span>
-        <span class="bm-score ${!m.played?'tbd':''}">${m.played?m.totalLocal:'?'}</span>
+    const rEnd   = (feedRows[feedRows.length-1]||gridRow);
+
+    // Resolve ida / vuelta results if available
+    const idaR    = m.idaR;
+    const vueltaR = m.vueltaR;
+    const hasIda    = !!idaR;
+    const hasVuelta = !!vueltaR;
+    const bothPlayed = hasIda && hasVuelta;
+
+    // Winner logic
+    const lW = bothPlayed && m.totalLocal > m.totalVisit;
+    const vW = bothPlayed && m.totalVisit > m.totalLocal;
+    const winnerName = lW ? m.local : vW ? m.visitante : null;
+
+    // Ida row: o.local (home) vs o.visitante (away)
+    function teamStyle(isW){ return isW ? 'font-weight:700;color:var(--text)' : 'color:var(--muted)'; }
+
+    // Ida: o.local (home) vs o.visitante (away)
+    const idaLocalW = hasIda && idaR.gl > idaR.gv;
+    const idaVisitW = hasIda && idaR.gv > idaR.gl;
+    const idaHtml = `<div class="bm-team ${hasIda&&idaLocalW?'winner':''} ${!hasIda?'pending':''}">
+        <span class="bm-name">${short(o.local)}</span>
+        <span class="bm-score ${!hasIda?'tbd':''}">${hasIda?idaR.gl:'?'}</span>
       </div>
-      <div class="bm-team ${vW?'winner':''} ${!m.played?'pending':''}">
-        <span class="bm-name">${short(m.visitante)}</span>
-        <span class="bm-score ${!m.played?'tbd':''}">${m.played?m.totalVisit:'?'}</span>
+      <div class="bm-team ${hasIda&&idaVisitW?'winner':''} ${!hasIda?'pending':''}">
+        <span class="bm-name">${short(o.visitante)}</span>
+        <span class="bm-score ${!hasIda?'tbd':''}">${hasIda?idaR.gv:'?'}</span>
+      </div>`;
+
+    // Vuelta: o.visitante (home) vs o.local (away)
+    const vueLocalW  = hasVuelta && vueltaR.gl > vueltaR.gv;
+    const vueVisitW  = hasVuelta && vueltaR.gv > vueltaR.gl;
+    const vueltaHtml = `<div class="bm-team ${hasVuelta&&vueLocalW?'winner':''} ${!hasVuelta?'pending':''}">
+        <span class="bm-name">${short(o.visitante)}</span>
+        <span class="bm-score ${!hasVuelta?'tbd':''}">${hasVuelta?vueltaR.gl:'?'}</span>
       </div>
-      ${m.played?`<div style="font-size:9px;color:var(--accent);padding:2px 8px">Global: ${score}</div>`:''}
+      <div class="bm-team ${hasVuelta&&vueVisitW?'winner':''} ${!hasVuelta?'pending':''}">
+        <span class="bm-name">${short(o.local)}</span>
+        <span class="bm-score ${!hasVuelta?'tbd':''}">${hasVuelta?vueltaR.gv:'?'}</span>
+      </div>`;
+
+    const globalHtml = bothPlayed
+      ? `<div class="bm-global">Global: ${m.totalLocal}–${m.totalVisit} · ✅ ${short(winnerName)}</div>`
+      : `<div class="bm-global" style="color:var(--accent3)">${hasIda&&!hasVuelta?'⏳ Vuelta pendiente':'📅 Próximamente'}</div>`;
+
+    const borderCol = bothPlayed ? 'var(--accent2)' : hasIda ? 'rgba(255,107,53,0.5)' : 'var(--border)';
+    return `<div class="bc-match-wrap"
+      style="grid-column:4;grid-row:${rStart}/${rEnd+1}">
+      <div class="bc-match" style="border-color:${borderCol}">
+        <div class="bm-date">IDA · ${o.fechaIda||'—'}</div>
+        ${idaHtml}
+        <div class="bm-date" style="border-top:1px solid var(--border)">VUELTA · ${o.fechaVuelta||'—'}</div>
+        ${vueltaHtml}
+        ${globalHtml}
+      </div>
     </div>`;
   }
 
@@ -1330,11 +1377,17 @@ function renderBracket(){
   }
 
   // ── Cuartos / Semis / Final (TBD) ────────────────────────────────────────
+  // label colours per round
+  const roundColors = {Cuartos:'var(--accent3)',Semi:'var(--gold)',FINAL:'var(--gold)'};
   function tbdMatch(col, rowStart, rowEnd, label){
-    return `<div class="bc-match"
-      style="grid-column:${col};grid-row:${rowStart}/${rowEnd+1};margin:3px">
-      <div class="bm-team pending"><span class="bm-name">${label} — Equipo A</span><span class="bm-score tbd">?</span></div>
-      <div class="bm-team pending"><span class="bm-name">${label} — Equipo B</span><span class="bm-score tbd">?</span></div>
+    const col_ = roundColors[label]||'var(--muted)';
+    return `<div class="bc-match-wrap"
+      style="grid-column:${col};grid-row:${rowStart}/${rowEnd+1}">
+      <div class="bc-match" style="border-color:${col_}22">
+        <div class="bm-date" style="color:${col_};text-align:center;font-size:10px;letter-spacing:1px">${label}</div>
+        <div class="bm-team pending"><span class="bm-name">Por definir</span><span class="bm-score tbd">?</span></div>
+        <div class="bm-team pending"><span class="bm-name">Por definir</span><span class="bm-score tbd">?</span></div>
+      </div>
     </div>`;
   }
   function connMid(col, rowStart, isTop){
@@ -1362,9 +1415,9 @@ function renderBracket(){
 
     // Col 1: row label
     const lbl = row.type==='bye'
-      ? `<span style="font-size:9px;color:var(--gold)">BYE</span>`
-      : `<span style="font-size:9px;color:var(--muted)">16avos #${ri+1}</span>`;
-    cells.push(`<div style="grid-column:1;grid-row:${gridRow};display:flex;align-items:center;justify-content:center;padding:2px 4px;border-right:1px solid var(--border)">${lbl}</div>`);
+      ? `<span style="font-size:9px;color:var(--gold);text-align:center">🏅<br>BYE</span>`
+      : `<span style="font-size:8px;color:var(--muted);text-align:center;line-height:1.3">#${Math.floor(ri/2)+1}<br><span style="color:var(--accent);font-size:9px">${ri%2===0?'▲':'▼'}</span></span>`;
+    cells.push(`<div style="grid-column:1;grid-row:${gridRow};display:flex;align-items:center;justify-content:center;padding:1px 3px;border-right:1px solid var(--border);border-bottom:1px solid rgba(26,58,92,0.3)">${lbl}</div>`);
 
     // Col 2: tie card
     cells.push(`<div style="grid-column:2;grid-row:${gridRow};display:flex;align-items:stretch">${tieCard(row)}</div>`);
@@ -1604,6 +1657,7 @@ function addResult(){
   localStorage.setItem('copa_results',JSON.stringify(addedResults));
   renderAddedList();
   renderOctavos();
+  renderBracket();   // ← real-time bracket update
   updateKPIs();
   // Refresh picker so saved match shows ✅ and next match auto-selects
   onFaseChange();
@@ -1625,7 +1679,7 @@ function addResult(){
 function deleteResult(id){
   addedResults=addedResults.filter(r=>r.id!==id);
   localStorage.setItem('copa_results',JSON.stringify(addedResults));
-  renderAddedList();renderOctavos();updateKPIs();
+  renderAddedList();renderOctavos();renderBracket();updateKPIs();
 }
 
 function renderAddedList(){
