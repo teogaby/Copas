@@ -1024,23 +1024,30 @@ function closeAdminModal(){
 async function doLogin(){
   const pwd = document.getElementById('admin-pwd-input').value.trim();
   if(!pwd){ document.getElementById('admin-modal-error').textContent='Introduce la contraseña'; return; }
-  // Test password against the save endpoint with a dry-run GET
-  const res = await fetch('/api/save?auth=1',{
-    method:'GET',
-    headers:{'x-admin-password':pwd}
-  });
-  if(res.ok){
-    isAdmin = true;
-    adminPassword = pwd;
-    closeAdminModal();
-    // Show admin tab + badge, hide login button
-    document.getElementById('nav-agregar').style.display='';
-    document.getElementById('nav-login').style.display='none';
-    document.getElementById('admin-badge').classList.add('visible');
-    showAlert('✅ Sesión admin iniciada. Ya puedes añadir resultados.','success');
-  } else {
-    document.getElementById('admin-modal-error').textContent='❌ Contraseña incorrecta';
-    document.getElementById('admin-pwd-input').value='';
+  document.getElementById('admin-modal-error').textContent='⏳ Verificando...';
+  try {
+    const res = await fetch('/api/save?auth=1',{
+      method:'GET',
+      headers:{
+        'x-admin-password': pwd,
+        'Content-Type': 'application/json'
+      }
+    });
+    const data = await res.json().catch(()=>({}));
+    if(res.status === 200 && data.ok){
+      isAdmin = true;
+      adminPassword = pwd;
+      closeAdminModal();
+      document.getElementById('nav-agregar').style.display='';
+      document.getElementById('nav-login').style.display='none';
+      document.getElementById('admin-badge').classList.add('visible');
+      showAlert('✅ Sesión admin iniciada. Ya puedes añadir resultados.','success');
+    } else {
+      document.getElementById('admin-modal-error').textContent='❌ Contraseña incorrecta ('+res.status+')';
+      document.getElementById('admin-pwd-input').value='';
+    }
+  } catch(e) {
+    document.getElementById('admin-modal-error').textContent='❌ Error de red: '+e.message;
   }
 }
 function logoutAdmin(){

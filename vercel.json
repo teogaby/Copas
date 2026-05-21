@@ -1,9 +1,7 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/api/data",    "destination": "/api/data.py" },
-    { "source": "/api/save",    "destination": "/api/save.js" },
-    { "source": "/api/results", "destination": "/api/results.js" }
+    { "source": "/api/data", "destination": "/api/data.py" }
   ],
   "headers": [
     {
