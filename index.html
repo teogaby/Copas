@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copa Cadete Preferente 2025-26 | Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ════════════════ RESET & BASE ════════════════ */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --pitch:#0a4d2e;--pitch2:#0d5c36;
+  --dark:#060e1a;--card:#0d1f35;--card2:#102440;
+  --accent:#00e5a0;--accent2:#00b8ff;--accent3:#ff6b35;
+  --gold:#ffd700;--silver:#c0c0c0;--bronze:#cd7f32;
+  --text:#e8f4f8;--muted:#7a9bb5;--border:#1a3a5c;
+  --green-team:#00c853;--red-team:#ff1744;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Barlow',sans-serif;
+  background:var(--dark);color:var(--text);
+  min-height:100vh;overflow-x:hidden;
+}
+
+/* ════════════════ FOOTBALL ANIMATION ════════════════ */
+.football-bg{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;z-index:0;overflow:hidden;
+  background:radial-gradient(ellipse at 20% 50%,#071a2e 0%,var(--dark) 70%);
+}
+.pitch-lines{
+  position:absolute;bottom:-10%;left:50%;transform:translateX(-50%);
+  width:700px;height:500px;opacity:0.04;
+}
+.ball{
+  position:absolute;font-size:28px;
+  animation:floatBall linear infinite;
+  opacity:0.15;
+}
+@keyframes floatBall{
+  0%{transform:translateX(-60px) translateY(0) rotate(0deg)}
+  100%{transform:translateX(calc(100vw + 60px)) translateY(-100px) rotate(720deg)}
+}
+.stars{position:absolute;width:2px;height:2px;background:white;border-radius:50%;animation:twinkle 3s infinite}
+@keyframes twinkle{0%,100%{opacity:0}50%{opacity:0.6}}
+
+/* ════════════════ HEADER ════════════════ */
+header{
+  position:relative;z-index:10;
+  padding:0;
+  background:linear-gradient(135deg,#060e1a 0%,#0a1f38 50%,#060e1a 100%);
+  border-bottom:2px solid var(--accent);
+  overflow:hidden;
+}
+.header-pitch{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  background:repeating-linear-gradient(
+    90deg,
+    transparent 0%,transparent 48%,
+    rgba(0,229,160,0.03) 48%,rgba(0,229,160,0.03) 52%,
+    transparent 52%,transparent 100%
+  );
+  pointer-events:none;
+}
+.header-content{
+  position:relative;z-index:1;
+  max-width:1400px;margin:0 auto;
+  padding:24px 32px;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:20px;flex-wrap:wrap;
+}
+.header-left{display:flex;align-items:center;gap:20px}
+.trophy-icon{
+  font-size:56px;
+  filter:drop-shadow(0 0 20px rgba(255,215,0,0.5));
+  animation:trophyPulse 3s ease-in-out infinite;
+}
+@keyframes trophyPulse{
+  0%,100%{filter:drop-shadow(0 0 20px rgba(255,215,0,0.4))}
+  50%{filter:drop-shadow(0 0 35px rgba(255,215,0,0.8))}
+}
+.header-titles h1{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(28px,4vw,52px);
+  letter-spacing:3px;
+  background:linear-gradient(90deg,var(--gold),var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  line-height:1;
+}
+.header-titles p{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:14px;color:var(--muted);letter-spacing:2px;
+  text-transform:uppercase;margin-top:4px;
+}
+.live-badge{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(0,229,160,0.1);border:1px solid var(--accent);
+  border-radius:20px;padding:8px 16px;
+  font-size:12px;font-weight:700;color:var(--accent);
+  letter-spacing:1px;text-transform:uppercase;
+}
+.live-dot{
+  width:8px;height:8px;background:var(--accent);border-radius:50%;
+  animation:blink 1.2s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ════════════════ NAV TABS ════════════════ */
+.nav-tabs{
+  position:sticky;top:0;z-index:100;
+  background:rgba(6,14,26,0.95);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  display:flex;overflow-x:auto;
+  scrollbar-width:none;
+}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{
+  flex-shrink:0;padding:14px 24px;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:13px;font-weight:700;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--muted);
+  cursor:pointer;border-bottom:3px solid transparent;
+  transition:all 0.25s;white-space:nowrap;
+  background:none;border-top:none;border-left:none;border-right:none;
+  border-bottom:3px solid transparent;
+}
+.nav-tab:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ════════════════ MAIN LAYOUT ════════════════ */
+.main{max-width:1400px;margin:0 auto;padding:24px 16px;position:relative;z-index:5}
+.section{display:none}.section.active{display:block}
+.section-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:32px;letter-spacing:3px;
+  color:var(--accent);margin-bottom:20px;
+  display:flex;align-items:center;gap:12px;
+}
+.section-title::after{
+  content:'';flex:1;height:2px;
+  background:linear-gradient(90deg,var(--accent),transparent);
+}
+
+/* ════════════════ KPI CARDS ════════════════ */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.kpi-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:20px 16px;
+  position:relative;overflow:hidden;
+  transition:transform 0.2s,box-shadow 0.2s;
+  animation:fadeUp 0.5s ease both;
+}
+.kpi-card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,229,160,0.15)}
+.kpi-card::before{
+  content:'';position:absolute;top:0;left:0;
+  width:100%;height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+}
+.kpi-icon{font-size:28px;margin-bottom:8px}
+.kpi-value{
+  font-family:'Bebas Neue',sans-serif;font-size:38px;
+  color:var(--accent);line-height:1;
+}
+.kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* ════════════════ CARDS & GRIDS ════════════════ */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:20px;overflow:hidden;
+}
+.card-title{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:14px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;color:var(--muted);
+  margin-bottom:16px;display:flex;align-items:center;gap:8px;
+}
+.chart-wrap{position:relative;height:280px}
+.chart-wrap-sm{position:relative;height:220px}
+
+/* ════════════════ RESULTS TABLE ════════════════ */
+.results-table{width:100%;border-collapse:collapse;font-size:13px}
+.results-table th{
+  background:var(--card2);color:var(--muted);
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:11px;font-weight:700;letter-spacing:1.5px;
+  text-transform:uppercase;padding:10px 12px;text-align:left;
+}
+.results-table td{padding:10px 12px;border-bottom:1px solid rgba(26,58,92,0.5)}
+.results-table tr:hover td{background:rgba(0,229,160,0.04)}
+.score-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-family:'Bebas Neue',sans-serif;font-size:18px;
+  letter-spacing:2px;
+}
+.score-sep{color:var(--muted);font-size:14px}
+.team-winner{font-weight:700;color:var(--text)}
+.team-loser{color:var(--muted)}
+.badge{
+  display:inline-block;padding:2px 8px;border-radius:4px;
+  font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+}
+.badge-win{background:rgba(0,200,83,0.15);color:var(--green-team)}
+.badge-loss{background:rgba(255,23,68,0.15);color:var(--red-team)}
+.badge-draw{background:rgba(255,215,0,0.15);color:var(--gold)}
+.badge-phase{background:rgba(0,184,255,0.15);color:var(--accent2)}
+.badge-next{background:rgba(255,107,53,0.15);color:var(--accent3);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+
+/* ════════════════ BRACKET ════════════════ */
+.bracket-container{
+  overflow-x:auto;padding:20px 0;
+}
+.bracket{display:flex;gap:0;min-width:900px}
+.bracket-round{flex:1;display:flex;flex-direction:column;justify-content:space-around;padding:0 8px}
+.round-title{
+  font-family:'Bebas Neue',sans-serif;font-size:16px;
+  letter-spacing:2px;color:var(--accent);
+  text-align:center;margin-bottom:12px;padding:6px;
+  background:rgba(0,229,160,0.05);border-radius:6px;
+  border-top:2px solid var(--accent);
+}
+.match-card{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:8px;margin:4px 0;
+  overflow:hidden;transition:border-color 0.2s;
+  position:relative;
+}
+.match-card:hover{border-color:var(--accent)}
+.match-team{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:7px 10px;font-size:11px;
+}
+.match-team.winner{background:rgba(0,229,160,0.08);font-weight:700}
+.match-team-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.match-score{
+  font-family:'Bebas Neue',sans-serif;font-size:16px;
+  color:var(--accent);min-width:24px;text-align:right;
+}
+.match-divider{height:1px;background:var(--border)}
+.match-pending .match-score{color:var(--muted);font-size:12px}
+.connector{
+  width:20px;flex-shrink:0;display:flex;flex-direction:column;
+  justify-content:space-around;align-items:center;opacity:0.3;
+}
+.conn-line{width:100%;height:1px;background:var(--accent)}
+
+/* ════════════════ GOLEADORES ════════════════ */
+.scorer-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:14px 16px;margin-bottom:8px;
+  display:flex;align-items:center;gap:12px;
+  transition:transform 0.2s,border-color 0.2s;
+}
+.scorer-card:hover{transform:translateX(4px);border-color:var(--accent)}
+.scorer-pos{
+  font-family:'Bebas Neue',sans-serif;font-size:20px;
+  min-width:36px;text-align:center;
+}
+.pos-1{color:var(--gold)}
+.pos-2{color:var(--silver)}
+.pos-3{color:var(--bronze)}
+.pos-other{color:var(--muted)}
+.scorer-info{flex:1}
+.scorer-name{font-weight:700;font-size:14px}
+.scorer-team{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.scorer-stats{display:flex;gap:12px;align-items:center}
+.scorer-goals{
+  font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);
+  line-height:1;
+}
+.scorer-meta{font-size:11px;color:var(--muted);text-align:center}
+.goal-bar{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden;min-width:60px;max-width:100px}
+.goal-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+
+/* ════════════════ TEAM STATS ════════════════ */
+.team-stat-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 14px;border-radius:8px;margin-bottom:6px;
+  background:var(--card2);border:1px solid transparent;
+  transition:border-color 0.2s;font-size:13px;
+}
+.team-stat-row:hover{border-color:var(--border)}
+.team-stat-row.qualified{border-left:3px solid var(--green-team)}
+.team-stat-row.eliminated{border-left:3px solid var(--red-team)}
+.team-stat-name{flex:1;font-weight:600}
+.team-stat-nums{display:flex;gap:16px}
+.stat-num{text-align:center;min-width:30px}
+.stat-num span{display:block;font-family:'Bebas Neue',sans-serif;font-size:16px}
+.stat-num small{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+
+/* ════════════════ ADD RESULT FORM ════════════════ */
+.add-form{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:24px;margin-bottom:24px;
+}
+.form-title{
+  font-family:'Bebas Neue',sans-serif;font-size:24px;
+  letter-spacing:2px;color:var(--accent3);margin-bottom:20px;
+  display:flex;align-items:center;gap:10px;
+}
+.form-row{display:grid;grid-template-columns:1fr auto auto auto 1fr auto;gap:12px;align-items:end;flex-wrap:wrap}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700}
+.form-group select,.form-group input{
+  background:var(--card2);border:1px solid var(--border);
+  color:var(--text);border-radius:8px;padding:10px 12px;
+  font-family:'Barlow',sans-serif;font-size:13px;
+  outline:none;transition:border-color 0.2s;
+}
+.form-group select:focus,.form-group input:focus{border-color:var(--accent)}
+.score-input{width:60px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:22px}
+.vs-divider{
+  font-family:'Bebas Neue',sans-serif;font-size:22px;
+  color:var(--muted);padding:0 8px;line-height:1;
+  display:flex;align-items:center;padding-top:24px;
+}
+.btn{
+  padding:10px 24px;border-radius:8px;border:none;
+  font-family:'Barlow Condensed',sans-serif;font-size:13px;
+  font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  cursor:pointer;transition:all 0.2s;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:var(--dark);
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,229,160,0.3)}
+.btn-danger{background:rgba(255,23,68,0.2);color:var(--red-team);border:1px solid var(--red-team)}
+
+/* ════════════════ OCTAVOS MATCHES ════════════════ */
+.octavos-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.match-future{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:16px;
+  transition:border-color 0.2s;
+}
+.match-future:hover{border-color:var(--accent2)}
+.match-header{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.match-teams{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.match-team-box{
+  flex:1;background:var(--card2);border-radius:6px;padding:8px 10px;
+  font-size:12px;font-weight:600;text-align:center;
+}
+.match-vs{
+  font-family:'Bebas Neue',sans-serif;font-size:18px;
+  color:var(--muted);padding:0 8px;
+}
+.match-info{display:flex;justify-content:space-between;margin-top:10px;font-size:11px;color:var(--muted)}
+
+/* ════════════════ ALERTS ════════════════ */
+.alert{
+  padding:10px 16px;border-radius:8px;margin-bottom:12px;
+  font-size:13px;display:flex;align-items:center;gap:8px;
+}
+.alert-success{background:rgba(0,200,83,0.1);border:1px solid rgba(0,200,83,0.3);color:#00c853}
+.alert-info{background:rgba(0,184,255,0.1);border:1px solid rgba(0,184,255,0.3);color:var(--accent2)}
+
+/* ════════════════ RESPONSIVE ════════════════ */
+@media(max-width:900px){
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .form-row{grid-template-columns:1fr 1fr;gap:10px}
+  .octavos-grid{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .header-content{padding:16px}
+  .kpi-grid{grid-template-columns:repeat(3,1fr)}
+  .kpi-value{font-size:28px}
+}
+
+/* match picker */
+#f-match-picker{
+  background:var(--card2);border:1px solid var(--accent2);
+  color:var(--text);border-radius:8px;padding:10px 12px;
+  font-family:'Barlow',sans-serif;font-size:13px;
+  outline:none;transition:border-color 0.2s;width:100%;
+}
+#f-match-picker:focus{border-color:var(--accent)}
+#match-info-chip{display:none;margin-bottom:16px;padding:10px 14px;background:rgba(0,184,255,0.08);border:1px solid rgba(0,184,255,0.3);border-radius:8px;font-size:12px;color:var(--accent2);gap:20px;flex-wrap:wrap}
+/* Scroll */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--dark)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+
+/* ════════════════ TOOLTIP ════════════════ */
+.tooltip{position:relative}
+.tooltip:hover::after{
+  content:attr(data-tip);
+  position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,0.9);color:white;font-size:11px;
+  padding:4px 8px;border-radius:4px;white-space:nowrap;z-index:999;
+  margin-bottom:4px;
+}
+</style>
+</head>
+<body>
+
+<!-- Animated background -->
+<div class="football-bg">
+  <svg class="pitch-lines" viewBox="0 0 700 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="1" y="1" width="698" height="498" stroke="white" stroke-width="2"/>
+    <line x1="350" y1="1" x2="350" y2="499" stroke="white" stroke-width="2"/>
+    <circle cx="350" cy="250" r="80" stroke="white" stroke-width="2"/>
+    <rect x="1" y="150" width="100" height="200" stroke="white" stroke-width="2"/>
+    <rect x="599" y="150" width="100" height="200" stroke="white" stroke-width="2"/>
+    <rect x="1" y="175" width="50" height="150" stroke="white" stroke-width="2"/>
+    <rect x="649" y="175" width="50" height="150" stroke="white" stroke-width="2"/>
+    <circle cx="350" cy="250" r="4" fill="white"/>
+    <circle cx="120" cy="250" r="4" fill="white"/>
+    <circle cx="580" cy="250" r="4" fill="white"/>
+  </svg>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="header-pitch"></div>
+  <div class="header-content">
+    <div class="header-left">
+      <div class="trophy-icon">🏆</div>
+      <div class="header-titles">
+        <h1>Copa Cadete Preferente</h1>
+        <p>Federación Interinsular de Fútbol de Tenerife · Grupo 1 · Temporada 2025-2026</p>
+      </div>
+    </div>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      Temporada Activa
+    </div>
+  </div>
+</header>
+
+<!-- Nav Tabs -->
+<nav class="nav-tabs">
+  <button class="nav-tab active" onclick="showTab('overview')">⚡ Overview</button>
+  <button class="nav-tab" onclick="showTab('resultados')">⚽ Resultados 16avos</button>
+  <button class="nav-tab" onclick="showTab('bracket')">🏆 Cuadro Copa</button>
+  <button class="nav-tab" onclick="showTab('stats')">📊 Estadísticas</button>
+  <button class="nav-tab" onclick="showTab('goleadores')">🥅 Goleadores</button>
+  <button class="nav-tab" onclick="showTab('octavos')">🔜 Octavos</button>
+  <button class="nav-tab" onclick="showTab('agregar')">➕ Agregar Resultado</button>
+</nav>
+
+<div class="main">
+<!-- API status banner -->
+<div id="api-banner" style="display:none;align-items:center;gap:10px;
+  padding:10px 16px;margin-bottom:16px;border-radius:8px;
+  border:1px solid var(--accent2);background:rgba(0,184,255,0.08);
+  font-size:12px;color:var(--accent2);transition:all 0.3s">
+  <div class="live-dot" style="background:var(--accent2)"></div>
+  <span id="api-status">⏳ Sincronizando con Excel...</span>
+</div>
+
+<!-- ═══════════════ TAB: OVERVIEW ═══════════════ -->
+<div id="tab-overview" class="section active">
+  <div class="section-title">⚡ Dashboard General</div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card" style="animation-delay:0.05s">
+      <div class="kpi-icon">⚽</div>
+      <div class="kpi-value" id="kpi-goles">73</div>
+      <div class="kpi-label">Goles Totales</div>
+    </div>
+    <div class="kpi-card" style="animation-delay:0.1s">
+      <div class="kpi-icon">📅</div>
+      <div class="kpi-value" id="kpi-partidos">20</div>
+      <div class="kpi-label">Partidos Jugados</div>
+    </div>
+    <div class="kpi-card" style="animation-delay:0.15s">
+      <div class="kpi-icon">📈</div>
+      <div class="kpi-value" id="kpi-media">3.65</div>
+      <div class="kpi-label">Media Goles/Partido</div>
+    </div>
+    <div class="kpi-card" style="animation-delay:0.2s">
+      <div class="kpi-icon">🏟️</div>
+      <div class="kpi-value">26</div>
+      <div class="kpi-label">Equipos Participantes</div>
+    </div>
+    <div class="kpi-card" style="animation-delay:0.25s">
+      <div class="kpi-icon">✅</div>
+      <div class="kpi-value">10</div>
+      <div class="kpi-label">Clasificados Octavos</div>
+    </div>
+    <div class="kpi-card" style="animation-delay:0.3s">
+      <div class="kpi-icon">🎯</div>
+      <div class="kpi-value">50</div>
+      <div class="kpi-label">Goleadores Distintos</div>
+    </div>
+    <div class="kpi-card" style="animation-delay:0.35s">
+      <div class="kpi-icon">🤝</div>
+      <div class="kpi-value" id="kpi-empates">5</div>
+      <div class="kpi-label">Eliminatorias al Límite</div>
+    </div>
+    <div class="kpi-card" style="animation-delay:0.4s">
+      <div class="kpi-icon">🔥</div>
+      <div class="kpi-value">13</div>
+      <div class="kpi-label">Max Goles (Real Unión)</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">⚽ Goles por Equipo (Clasificados)</div>
+      <div class="chart-wrap"><canvas id="chart-goles-equipo"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📊 Distribución Resultados 16avos</div>
+      <div class="chart-wrap"><canvas id="chart-dist"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🥅 Goles Marcados vs Encajados (16avos)</div>
+      <div class="chart-wrap"><canvas id="chart-gf-gc"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📈 Goles por Jornada (Ida vs Vuelta)</div>
+      <div class="chart-wrap"><canvas id="chart-jornadas"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Top 3 goleadores quick view -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">🌟 Top Goleadores</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px" id="top-scorers-overview"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ TAB: RESULTADOS ═══════════════ -->
+<div id="tab-resultados" class="section">
+  <div class="section-title">⚽ Resultados Dieciseisavos</div>
+
+  <!-- Ida -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title"><span class="badge badge-phase">Ida</span> &nbsp;7–10 Mayo 2026</div>
+    <div style="overflow-x:auto">
+    <table class="results-table" id="table-ida"></table>
+    </div>
+  </div>
+
+  <!-- Vuelta -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title"><span class="badge badge-phase">Vuelta</span> &nbsp;15–17 Mayo 2026</div>
+    <div style="overflow-x:auto">
+    <table class="results-table" id="table-vuelta"></table>
+    </div>
+  </div>
+
+  <!-- Eliminatorias globales -->
+  <div class="card">
+    <div class="card-title">🏆 Resultado Global Eliminatorias</div>
+    <div style="overflow-x:auto">
+    <table class="results-table" id="table-global"></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ TAB: BRACKET ═══════════════ -->
+<div id="tab-bracket" class="section">
+  <div class="section-title">🏆 Cuadro de la Copa</div>
+  <div class="bracket-container">
+    <div class="bracket" id="bracket-view"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ TAB: STATS ═══════════════ -->
+<div id="tab-stats" class="section">
+  <div class="section-title">📊 Análisis Estadístico Avanzado</div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🎯 Diferencia de Goles por Equipo</div>
+      <div class="chart-wrap"><canvas id="chart-dg"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚡ Eficiencia Ofensiva (GF/PJ)</div>
+      <div class="chart-wrap"><canvas id="chart-eficiencia"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-3" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">🏟️ Tipo de Césped</div>
+      <div class="chart-wrap-sm"><canvas id="chart-cesped"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📅 Partidos por Día</div>
+      <div class="chart-wrap-sm"><canvas id="chart-dias"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🌡️ Intensidad Competitiva</div>
+      <div class="chart-wrap-sm"><canvas id="chart-intensidad"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">📋 Tabla Completa de Equipos</div>
+    <div style="overflow-x:auto">
+    <table class="results-table" id="table-stats-equipos"></table>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🔢 Goles por Equipo (Ida vs Vuelta)</div>
+      <div class="chart-wrap"><canvas id="chart-ida-vuelta-eq"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📊 Radar Métricas Equipos Top</div>
+      <div class="chart-wrap"><canvas id="chart-radar"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ TAB: GOLEADORES ═══════════════ -->
+<div id="tab-goleadores" class="section">
+  <div class="section-title">🥅 Tabla de Goleadores</div>
+
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">🏆 Top 10 Goleadores</div>
+      <div class="chart-wrap"><canvas id="chart-top10"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🎯 Goles por Equipo (Total)</div>
+      <div class="chart-wrap"><canvas id="chart-goles-team-total"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">⚡ Media Goles/Partido (Top 15)</div>
+      <div class="chart-wrap"><canvas id="chart-media-gol"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🎖️ Penaltis anotados</div>
+      <div class="chart-wrap-sm"><canvas id="chart-penaltis"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Scorers list -->
+  <div class="card">
+    <div class="card-title">📋 Lista Completa de Goleadores</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="scorers-list"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ TAB: OCTAVOS ═══════════════ -->
+<div id="tab-octavos" class="section">
+  <div class="section-title">🔜 Octavos de Final</div>
+  <div class="alert alert-info">⚡ Los partidos de ida comienzan el 22–24 de Mayo 2026. Los resultados se pueden agregar en la pestaña "Agregar Resultado".</div>
+  <div class="octavos-grid" id="octavos-grid"></div>
+
+  <div class="section-title" style="margin-top:24px">📋 Resultados Octavos</div>
+  <div class="card">
+    <div style="overflow-x:auto">
+    <table class="results-table" id="table-octavos-results"></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ TAB: AGREGAR ═══════════════ -->
+<div id="tab-agregar" class="section">
+  <div class="section-title">➕ Agregar Resultado</div>
+  <div id="form-alert"></div>
+
+  <div class="add-form">
+    <div class="form-title">⚽ Nuevo Resultado</div>
+
+    <!-- Fase + Fecha + Campo -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px">
+      <div class="form-group">
+        <label>Fase</label>
+        <select id="f-fase" onchange="onFaseChange()">
+          <option value="Octavos-Ida">Octavos — Ida</option>
+          <option value="Octavos-Vuelta">Octavos — Vuelta</option>
+          <option value="Cuartos-Ida">Cuartos — Ida</option>
+          <option value="Cuartos-Vuelta">Cuartos — Vuelta</option>
+          <option value="Semifinal-Ida">Semifinal — Ida</option>
+          <option value="Semifinal-Vuelta">Semifinal — Vuelta</option>
+          <option value="Final">Final</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Fecha</label>
+        <input type="date" id="f-fecha">
+      </div>
+      <div class="form-group">
+        <label>Campo</label>
+        <input type="text" id="f-campo" placeholder="Se rellena automáticamente">
+      </div>
+    </div>
+
+    <!-- Partido selector from calendar -->
+    <div id="match-picker-row" style="margin-bottom:16px">
+      <div class="form-group">
+        <label>Partido del Calendario</label>
+        <select id="f-match-picker" onchange="onMatchPick()" style="width:100%">
+          <option value="">— Selecciona un partido —</option>
+        </select>
+      </div>
+      <div id="calendar-hint" style="margin-top:8px;font-size:11px;color:var(--muted)">
+        Selecciona la fase primero para ver los partidos disponibles según el calendario.
+      </div>
+    </div>
+
+    <!-- Teams + Score -->
+    <div style="display:grid;grid-template-columns:1fr 80px 40px 80px 1fr;gap:12px;align-items:end;margin-bottom:20px">
+      <div class="form-group">
+        <label>Equipo Local</label>
+        <select id="f-local" onchange="onLocalChange()" style="background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-family:'Barlow',sans-serif;font-size:13px;outline:none;width:100%"></select>
+      </div>
+      <div class="form-group">
+        <label>Goles Local</label>
+        <input type="number" class="score-input" id="f-gl" min="0" max="20" value="0">
+      </div>
+      <div class="vs-divider">VS</div>
+      <div class="form-group">
+        <label>Goles Visit.</label>
+        <input type="number" class="score-input" id="f-gv" min="0" max="20" value="0">
+      </div>
+      <div class="form-group">
+        <label>Equipo Visitante</label>
+        <!-- Visitante se fija automáticamente; editable solo si no hay calendario -->
+        <div id="visitante-display" style="background:rgba(0,229,160,0.06);border:1px solid var(--accent);border-radius:8px;padding:10px 12px;font-size:13px;font-weight:600;color:var(--accent);min-height:40px;display:flex;align-items:center">—</div>
+        <select id="f-visitante" style="display:none"></select>
+      </div>
+    </div>
+
+    <!-- Match info chip -->
+    <div id="match-info-chip" style="display:none;margin-bottom:16px;padding:10px 14px;background:rgba(0,184,255,0.08);border:1px solid rgba(0,184,255,0.3);border-radius:8px;font-size:12px;color:var(--accent2);display:flex;gap:20px;flex-wrap:wrap"></div>
+
+    <button class="btn btn-primary" onclick="addResult()">✅ Guardar Resultado</button>
+    <button class="btn" style="margin-left:8px;background:rgba(122,155,181,0.1);color:var(--muted)" onclick="resetForm()">↺ Limpiar</button>
+  </div>
+
+  <!-- Added results -->
+  <div class="section-title">📋 Resultados Agregados</div>
+  <div id="added-results-list">
+    <div class="alert alert-info">Aún no hay resultados agregados. Usa el formulario de arriba para añadir los próximos partidos.</div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+// ══════════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════════
+const TEAMS = [
+  "A.D. CHINCANAYRO A","A.J. UNION LA PAZ A","C.D. AFB. TEGUESTE A",
+  "C.D. AGUILAS B","C.D. ANADONA C.F. A","C.D. BEDIJO EL ROSARIO C.F. A",
+  "C.D. BUZANADA A","C.D. EL TRANVIA A","C.D. JVT. SILENSE A",
+  "C.D. RAQUI LABRADOR B","C.D. SAN ANDRES A","C.D. SAN MARCOS-ICOD A",
+  "C.D. SAUZAL SABATER A","C.D. UNION TEJINA A","C.D. VERDELLADA A",
+  "E.M.F. SANTIAGO DEL TEIDE A","ESFERICO F.C. B",
+  "FURIA ARONA REST. LAS GANGARRAS A","REAL UNION TENERIFE S/C B",
+  "S.D. VALLESECO B","SAN FERNANDO REY C.F. A","U.D LAS ZOCAS A",
+  "U.D. COROMOTO B","U.D. OROTAVA A","U.D. TACO SAN LUIS A","U.D. TAHODIO A"
+];
+
+let IDA = [
+  {local:"C.D. AFB. TEGUESTE A",gl:1,gv:2,visitante:"S.D. VALLESECO B",fecha:"07/05/2026",campo:"TEGUESTE"},
+  {local:"C.D. SAUZAL SABATER A",gl:3,gv:0,visitante:"U.D. TAHODIO A",fecha:"08/05/2026",campo:"EL SAUZAL"},
+  {local:"C.D. VERDELLADA A",gl:1,gv:1,visitante:"C.D. SAN ANDRES A",fecha:"08/05/2026",campo:"LA VERDELLADA"},
+  {local:"C.D. UNION TEJINA A",gl:3,gv:3,visitante:"SAN FERNANDO REY C.F. A",fecha:"09/05/2026",campo:"IZQUIERDO RODRIGUEZ"},
+  {local:"A.J. UNION LA PAZ A",gl:0,gv:6,visitante:"REAL UNION TENERIFE S/C B",fecha:"09/05/2026",campo:"CHANO HDEZ. BRITO"},
+  {local:"U.D. TACO SAN LUIS A",gl:0,gv:0,visitante:"C.D. BUZANADA A",fecha:"09/05/2026",campo:"PABLOS ABRIL"},
+  {local:"C.D. JVT. SILENSE A",gl:1,gv:1,visitante:"C.D. BEDIJO EL ROSARIO C.F. A",fecha:"09/05/2026",campo:"JUAN VALIENTE"},
+  {local:"U.D LAS ZOCAS A",gl:0,gv:0,visitante:"E.M.F. SANTIAGO DEL TEIDE A",fecha:"09/05/2026",campo:"LAS ZOCAS"},
+  {local:"C.D. AGUILAS B",gl:0,gv:0,visitante:"U.D. OROTAVA A",fecha:"09/05/2026",campo:"A D E J E"},
+  {local:"ESFERICO F.C. B",gl:1,gv:1,visitante:"C.D. ANADONA C.F. A",fecha:"10/05/2026",campo:"JUAN SANTAMARIA"},
+];
+
+let VUELTA = [
+  {local:"C.D. SAN ANDRES A",gl:2,gv:0,visitante:"C.D. VERDELLADA A",fecha:"15/05/2026",campo:"MARIA JIMENEZ"},
+  {local:"S.D. VALLESECO B",gl:3,gv:2,visitante:"C.D. AFB. TEGUESTE A",fecha:"15/05/2026",campo:"VALLESECO"},
+  {local:"C.D. BEDIJO EL ROSARIO C.F. A",gl:3,gv:2,visitante:"C.D. JVT. SILENSE A",fecha:"15/05/2026",campo:"LA ESPERANZA"},
+  {local:"U.D. TAHODIO A",gl:1,gv:5,visitante:"C.D. SAUZAL SABATER A",fecha:"15/05/2026",campo:"LA ALEGRIA"},
+  {local:"C.D. ANADONA C.F. A",gl:0,gv:3,visitante:"ESFERICO F.C. B",fecha:"15/05/2026",campo:"EL MEDANO"},
+  {local:"REAL UNION TENERIFE S/C B",gl:7,gv:2,visitante:"A.J. UNION LA PAZ A",fecha:"15/05/2026",campo:"LA SALUD"},
+  {local:"U.D. OROTAVA A",gl:1,gv:3,visitante:"C.D. AGUILAS B",fecha:"16/05/2026",campo:"LOS CUARTOS"},
+  {local:"E.M.F. SANTIAGO DEL TEIDE A",gl:1,gv:5,visitante:"U.D LAS ZOCAS A",fecha:"17/05/2026",campo:"PUERTO SANTIAGO"},
+  {local:"C.D. BUZANADA A",gl:1,gv:2,visitante:"U.D. TACO SAN LUIS A",fecha:"17/05/2026",campo:"BUZANADA"},
+  {local:"SAN FERNANDO REY C.F. A",gl:3,gv:2,visitante:"C.D. UNION TEJINA A",fecha:"17/05/2026",campo:"GARCIA ESCAMEZ"},
+];
+
+const CLASIFICADOS = [
+  "C.D. SAN ANDRES A","S.D. VALLESECO B","C.D. BEDIJO EL ROSARIO C.F. A",
+  "C.D. SAUZAL SABATER A","ESFERICO F.C. B","REAL UNION TENERIFE S/C B",
+  "C.D. AGUILAS B","U.D LAS ZOCAS A","U.D. TACO SAN LUIS A","SAN FERNANDO REY C.F. A"
+];
+
+let OCTAVOS = [
+  {id:1,local:"C.D. SAN MARCOS-ICOD A",visitante:"U.D. TACO SAN LUIS A",campoIda:"EL MOLINO",fechaIda:"23/05/2026",fechaVuelta:"30/05/2026",campoVuelta:"PABLOS ABRIL"},
+  {id:2,local:"ESFERICO F.C. B",visitante:"A.D. CHINCANAYRO A",campoIda:"JUAN SANTAMARIA",fechaIda:"24/05/2026",fechaVuelta:"30/05/2026",campoVuelta:"GARCIA ESCAMEZ"},
+  {id:3,local:"C.D. EL TRANVIA A",visitante:"SAN FERNANDO REY C.F. A",campoIda:"JUAN SANTAMARIA",fechaIda:"23/05/2026",fechaVuelta:"31/05/2026",campoVuelta:"GARCIA ESCAMEZ"},
+  {id:4,local:"REAL UNION TENERIFE S/C B",visitante:"C.D. SAN ANDRES A",campoIda:"LA SALUD",fechaIda:"22/05/2026",fechaVuelta:"30/05/2026",campoVuelta:"MARIA JIMENEZ"},
+  {id:5,local:"U.D. COROMOTO B",visitante:"C.D. BEDIJO EL ROSARIO C.F. A",campoIda:"JUAN MANUEL MESA",fechaIda:"24/05/2026",fechaVuelta:"29/05/2026",campoVuelta:"LA ESPERANZA"},
+  {id:6,local:"C.D. SAUZAL SABATER A",visitante:"FURIA ARONA REST. LAS GANGARRAS A",campoIda:"EL SAUZAL",fechaIda:"24/05/2026",fechaVuelta:"31/05/2026",campoVuelta:"A R O N A"},
+  {id:7,local:"S.D. VALLESECO B",visitante:"U.D LAS ZOCAS A",campoIda:"VALLESECO",fechaIda:"24/05/2026",fechaVuelta:"30/05/2026",campoVuelta:"LAS ZOCAS"},
+  {id:8,local:"C.D. AGUILAS B",visitante:"C.D. RAQUI LABRADOR B",campoIda:"A D E J E",fechaIda:"23/05/2026",fechaVuelta:"31/05/2026",campoVuelta:"SAN ISIDRO"},
+];
+
+let GOLEADORES = [
+  {jugador:"ÁLVAREZ NAVARRO, UBAY",equipo:"S.D. VALLESECO B",pj:2,goles:3,penaltis:0,media:1.5},
+  {jugador:"MONACO FARIÑA, GABRIELE",equipo:"SAN FERNANDO REY C.F. A",pj:2,goles:3,penaltis:0,media:1.5},
+  {jugador:"DARIAS GUANCHE, PABLO",equipo:"C.D. UNION TEJINA A",pj:2,goles:3,penaltis:0,media:1.5},
+  {jugador:"DE LA VEGA OLMEDO, JESUS",equipo:"REAL UNION TENERIFE S/C B",pj:2,goles:3,penaltis:1,media:1.5},
+  {jugador:"ALONSO VALERIO, ANGEL",equipo:"REAL UNION TENERIFE S/C B",pj:2,goles:3,penaltis:0,media:1.5},
+  {jugador:"CARABALLO CANINO, IDERSON ESTEBAN",equipo:"REAL UNION TENERIFE S/C B",pj:2,goles:2,penaltis:0,media:1.0},
+  {jugador:"MORAN LORENZO, MIGUEL",equipo:"C.D. BEDIJO EL ROSARIO C.F. A",pj:2,goles:2,penaltis:0,media:1.0},
+  {jugador:"JEREZ GARCIA, GUILLERMO",equipo:"ESFERICO F.C. B",pj:2,goles:2,penaltis:0,media:1.0},
+  {jugador:"CASAÑAS LUIS, PABLO",equipo:"C.D. SAUZAL SABATER A",pj:2,goles:2,penaltis:0,media:1.0},
+  {jugador:"LENNON PEREZ, LIAM",equipo:"C.D. SAUZAL SABATER A",pj:2,goles:2,penaltis:0,media:1.0},
+  {jugador:"DIAO GOUDIABY, SAMBA DAVID",equipo:"REAL UNION TENERIFE S/C B",pj:2,goles:2,penaltis:0,media:1.0},
+  {jugador:"RAMOS CRUZ, DAYRON",equipo:"U.D LAS ZOCAS A",pj:2,goles:2,penaltis:0,media:1.0},
+  {jugador:"ENRIQUEZ GARCIA, MARIO DANIEL",equipo:"ESFERICO F.C. B",pj:2,goles:2,penaltis:0,media:1.0},
+  {jugador:"IZQUIERDO GONZALEZ, CRISTIAN",equipo:"C.D. SAUZAL SABATER A",pj:2,goles:2,penaltis:0,media:1.0},
+  {jugador:"FALL, BASSISOU",equipo:"C.D. AFB. TEGUESTE A",pj:2,goles:2,penaltis:0,media:1.0},
+  {jugador:"LUCIA, GIULIANO ROCCO",equipo:"C.D. AGUILAS B",pj:1,goles:1,penaltis:0,media:1.0},
+  {jugador:"MORALES MEJIAS, ALEXANDER GIOVANNI",equipo:"REAL UNION TENERIFE S/C B",pj:1,goles:1,penaltis:0,media:1.0},
+  {jugador:"MARAH JALLOW, MOHAMED",equipo:"A.J. UNION LA PAZ A",pj:1,goles:1,penaltis:0,media:1.0},
+  {jugador:"HERRERA HERNANDEZ, AARON",equipo:"U.D. TACO SAN LUIS A",pj:1,goles:1,penaltis:0,media:1.0},
+  {jugador:"LOPEZ TOSTE, AARON",equipo:"C.D. AGUILAS B",pj:1,goles:1,penaltis:0,media:1.0},
+  {jugador:"BLANCO TRUJILLO, LUIS MARIO",equipo:"SAN FERNANDO REY C.F. A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"PEREZ HERNANDEZ, ARIDAY",equipo:"U.D. OROTAVA A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"PEREZ DIAZ, DANYSSEL",equipo:"C.D. AFB. TEGUESTE A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"RAMIREZ VASQUEZ, EYDAM ALBERTO",equipo:"A.J. UNION LA PAZ A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"OSTA MIRANDA, DIEGO",equipo:"C.D. JVT. SILENSE A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"NDONG, GUSMANE",equipo:"SAN FERNANDO REY C.F. A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"MIRABELLA, CHRISTIAN",equipo:"C.D. BUZANADA A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"TOSTE DIAZ, MARCOS",equipo:"C.D. BEDIJO EL ROSARIO C.F. A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"TORRES MAGDALENA, JOSE",equipo:"SAN FERNANDO REY C.F. A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"GONZALEZ TABARES, JOEL ALEXANDER",equipo:"E.M.F. SANTIAGO DEL TEIDE A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"OUTERELO PASTOR, ARAY",equipo:"C.D. SAUZAL SABATER A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"TRAWALLE, NOUAH",equipo:"C.D. VERDELLADA A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"AMADOR ROSALES, SERGIO",equipo:"C.D. SAUZAL SABATER A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"HERNANDEZ LEON, ALVARO",equipo:"C.D. JVT. SILENSE A",pj:2,goles:1,penaltis:1,media:0.5},
+  {jugador:"HERNANDEZ ROMAGUERA, DAIRON",equipo:"U.D. TACO SAN LUIS A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"LOPEZ RODRIGUEZ, NACOR DAVID",equipo:"C.D. UNION TEJINA A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"VELAZQUEZ GONZALEZ, NUHAZET",equipo:"C.D. JVT. SILENSE A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"DENIZ FERNANDEZ, MIGUEL",equipo:"C.D. SAN ANDRES A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"SANCHEZ RODRIGUEZ, ERIK",equipo:"C.D. SAN ANDRES A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"TEJERA TORRES, ADEXE",equipo:"REAL UNION TENERIFE S/C B",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"BENITO GONZALEZ, ANCOR",equipo:"U.D LAS ZOCAS A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"DELGADO NABAL, PABLO",equipo:"S.D. VALLESECO B",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"RODRIGUEZ ALVAREZ, DIEGO XAVIER",equipo:"C.D. SAN ANDRES A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"HERNANDEZ MORGADO, FRANCISCO GIOVANNI",equipo:"C.D. BEDIJO EL ROSARIO C.F. A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"CRUZ RODICIO, PABLO",equipo:"U.D LAS ZOCAS A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"LUIS HERRERA, EDGAR AMADO",equipo:"C.D. ANADONA C.F. A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"EMBREY PORTO, ETHAN",equipo:"C.D. AGUILAS B",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"VIGIL ARRIAGA, JORGE",equipo:"REAL UNION TENERIFE S/C B",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"MOLINA MOLINA, FABIAN",equipo:"C.D. UNION TEJINA A",pj:2,goles:1,penaltis:0,media:0.5},
+  {jugador:"FELIPE PADRON, EDUARDO",equipo:"U.D. TAHODIO A",pj:2,goles:1,penaltis:0,media:0.5},
+];
+
+// Added results storage
+// Version guard: clear old data if format changed
+const DATA_VERSION = 'v2';
+if(localStorage.getItem('copa_data_version') !== DATA_VERSION){
+  localStorage.removeItem('copa_results');
+  localStorage.setItem('copa_data_version', DATA_VERSION);
+}
+let addedResults = JSON.parse(localStorage.getItem('copa_results') || '[]');
+
+// ── EXCEL API INTEGRATION ──────────────────────────────────────────────────
+// Tracks whether live data was loaded from the API
+let DATA_FROM_API = false;
+
+async function loadFromAPI(){
+  // Show loading indicator
+  const banner = document.getElementById('api-banner');
+  if(banner) banner.style.display='flex';
+  try {
+    const res = await fetch('/api/data', { cache:'no-cache' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const d = await res.json();
+    if(d.error) throw new Error(d.error);
+
+    // ── Overwrite live arrays with API data ────────────────────────────────
+    if(d.resultados && d.resultados.length){
+      // Split into IDA / VUELTA by fase field
+      IDA.length = 0;
+      VUELTA.length = 0;
+      d.resultados.forEach(r => {
+        if(r.fase === 'Ida')    IDA.push(r);
+        else if(r.fase === 'Vuelta') VUELTA.push(r);
+      });
+    }
+    if(d.goleadores && d.goleadores.length){
+      GOLEADORES.length = 0;
+      d.goleadores.forEach(g => GOLEADORES.push(g));
+    }
+    if(d.octavos && d.octavos.length){
+      OCTAVOS.length = 0;
+      d.octavos.forEach(o => OCTAVOS.push(o));
+    }
+
+    DATA_FROM_API = true;
+    if(banner){
+      banner.style.background='rgba(0,229,160,0.1)';
+      banner.style.borderColor='var(--accent)';
+      banner.querySelector('#api-status').textContent = '✅ Datos cargados desde Excel · ' + new Date().toLocaleTimeString('es-ES');
+      setTimeout(()=>banner.style.display='none', 4000);
+    }
+    console.log('✅ Copa data loaded from API');
+  } catch(err){
+    console.warn('⚠️ API no disponible, usando datos embebidos:', err.message);
+    if(banner){
+      banner.style.background='rgba(255,107,53,0.1)';
+      banner.style.borderColor='var(--accent3)';
+      banner.querySelector('#api-status').textContent = '⚠️ Usando datos embebidos (API no disponible)';
+      setTimeout(()=>banner.style.display='none', 5000);
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// COMPUTED STATS
+// ══════════════════════════════════════════════════════════
+function computeTeamStats(){
+  const stats = {};
+  const allMatches = [...IDA,...VUELTA,...addedResults];
+  allMatches.forEach(m=>{
+    [m.local,m.visitante].forEach(t=>{
+      if(!stats[t]) stats[t]={pj:0,pg:0,pe:0,pp:0,gf:0,gc:0};
+    });
+    stats[m.local].pj++;stats[m.visitante].pj++;
+    stats[m.local].gf+=m.gl;stats[m.local].gc+=m.gv;
+    stats[m.visitante].gf+=m.gv;stats[m.visitante].gc+=m.gl;
+    if(m.gl>m.gv){stats[m.local].pg++;stats[m.visitante].pp++;}
+    else if(m.gl<m.gv){stats[m.visitante].pg++;stats[m.local].pp++;}
+    else{stats[m.local].pe++;stats[m.visitante].pe++;}
+  });
+  Object.keys(stats).forEach(t=>{stats[t].dg=stats[t].gf-stats[t].gc;});
+  return stats;
+}
+
+function computeEliminatorias(){
+  const results=[];
+  IDA.forEach((ida,i)=>{
+    const vuelta=VUELTA[i];
+    const totalA=ida.gv+vuelta.gl; // equipo que jugó de visitante en ida es local en vuelta
+    const totalB=ida.gl+vuelta.gv;
+    // Equipo A = visitante en ida = local en vuelta
+    const eqA=vuelta.local; const eqB=vuelta.visitante;
+    results.push({eqA,eqB,totalA,totalB,clasificado:totalA>totalB?eqA:totalB>totalA?eqB:'Empate'});
+  });
+  return results;
+}
+
+// ══════════════════════════════════════════════════════════
+// RENDER TABLES
+// ══════════════════════════════════════════════════════════
+function renderResultsTable(tbId,matches,fase){
+  const tb=document.getElementById(tbId);
+  tb.innerHTML=`<thead><tr>
+    <th>#</th><th>Local</th><th>Resultado</th><th>Visitante</th>
+    <th>Fecha</th><th>Campo</th>
+  </tr></thead><tbody>${
+    matches.map((m,i)=>{
+      const lClass=m.gl>m.gv?'team-winner':'team-loser';
+      const vClass=m.gv>m.gl?'team-winner':'team-loser';
+      const badge=m.gl>m.gv?`<span class="badge badge-win">Local</span>`:
+                  m.gv>m.gl?`<span class="badge badge-win">Visitante</span>`:
+                  `<span class="badge badge-draw">Empate</span>`;
+      return `<tr>
+        <td style="color:var(--muted)">${i+1}</td>
+        <td class="${lClass}">${m.local}</td>
+        <td style="text-align:center">
+          <span class="score-badge">
+            <span style="color:${m.gl>=m.gv?'var(--accent)':'var(--muted)'}">${m.gl}</span>
+            <span class="score-sep">—</span>
+            <span style="color:${m.gv>=m.gl?'var(--accent)':'var(--muted)'}">${m.gv}</span>
+          </span>
+          ${badge}
+        </td>
+        <td class="${vClass}">${m.visitante}</td>
+        <td style="color:var(--muted);font-size:11px">${m.fecha}</td>
+        <td style="color:var(--muted);font-size:11px">${m.campo}</td>
+      </tr>`;
+    }).join('')
+  }</tbody>`;
+}
+
+function renderGlobalTable(){
+  const tb=document.getElementById('table-global');
+  const elim=computeEliminatorias();
+  tb.innerHTML=`<thead><tr>
+    <th>#</th><th>Equipo A</th><th>Total A</th><th></th>
+    <th>Total B</th><th>Equipo B</th><th>Clasificado</th>
+  </tr></thead><tbody>${
+    elim.map((e,i)=>`<tr>
+      <td style="color:var(--muted)">${i+1}</td>
+      <td style="font-weight:${e.totalA>e.totalB?700:400};color:${e.totalA>e.totalB?'var(--text)':'var(--muted)'}">${e.eqA}</td>
+      <td style="text-align:center;font-family:'Bebas Neue';font-size:22px;color:${e.totalA>e.totalB?'var(--accent)':'var(--muted)'}">${e.totalA}</td>
+      <td style="text-align:center;color:var(--muted)">—</td>
+      <td style="text-align:center;font-family:'Bebas Neue';font-size:22px;color:${e.totalB>e.totalA?'var(--accent)':'var(--muted)'}">${e.totalB}</td>
+      <td style="font-weight:${e.totalB>e.totalA?700:400};color:${e.totalB>e.totalA?'var(--text)':'var(--muted)'}">${e.eqB}</td>
+      <td><span style="color:var(--green-team);font-weight:700;font-size:12px">✅ ${e.clasificado}</span></td>
+    </tr>`).join('')
+  }</tbody>`;
+}
+
+function renderStatsTable(){
+  const stats=computeTeamStats();
+  const tb=document.getElementById('table-stats-equipos');
+  const rows=Object.entries(stats)
+    .sort((a,b)=>b[1].dg-a[1].dg||(b[1].gf-a[1].gf));
+  tb.innerHTML=`<thead><tr>
+    <th>#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th>
+    <th>GF</th><th>GC</th><th>DG</th><th>GF/PJ</th><th>GC/PJ</th><th>Estado</th>
+  </tr></thead><tbody>${
+    rows.map(([t,s],i)=>{
+      const q=CLASIFICADOS.includes(t);
+      const dgColor=s.dg>0?'var(--green-team)':s.dg<0?'var(--red-team)':'var(--muted)';
+      return `<tr>
+        <td style="color:var(--muted)">${i+1}</td>
+        <td style="font-weight:600">${t}</td>
+        <td style="text-align:center">${s.pj}</td>
+        <td style="text-align:center;color:var(--green-team)">${s.pg}</td>
+        <td style="text-align:center;color:var(--gold)">${s.pe}</td>
+        <td style="text-align:center;color:var(--red-team)">${s.pp}</td>
+        <td style="text-align:center;font-weight:700">${s.gf}</td>
+        <td style="text-align:center">${s.gc}</td>
+        <td style="text-align:center;font-weight:700;color:${dgColor}">${s.dg>0?'+':''}${s.dg}</td>
+        <td style="text-align:center;color:var(--muted)">${(s.gf/Math.max(s.pj,1)).toFixed(2)}</td>
+        <td style="text-align:center;color:var(--muted)">${(s.gc/Math.max(s.pj,1)).toFixed(2)}</td>
+        <td><span class="${q?'badge badge-win':'badge badge-loss'}">${q?'✅ Clasif.':'❌ Elim.'}</span></td>
+      </tr>`;
+    }).join('')
+  }</tbody>`;
+}
+
+function renderOctavos(){
+  const grid=document.getElementById('octavos-grid');
+  const phaseResults=addedResults.filter(r=>r.fase&&r.fase.startsWith('Octavos'));
+  grid.innerHTML=OCTAVOS.map(o=>{
+    const idaR=phaseResults.find(r=>r.fase==='Octavos-Ida'&&r.local===o.local);
+    const vueltaR=phaseResults.find(r=>r.fase==='Octavos-Vuelta'&&r.local===o.visitante);
+    const idaScore=idaR?`${idaR.gl}–${idaR.gv}`:'vs';
+    const vueltaScore=vueltaR?`${vueltaR.gl}–${vueltaR.gv}`:'vs';
+    return `<div class="match-future">
+      <div class="match-header">Partido ${o.id} · Octavos</div>
+      <div class="match-teams">
+        <div class="match-team-box">${o.local}</div>
+        <div class="match-vs">${idaScore}</div>
+        <div class="match-team-box">${o.visitante}</div>
+      </div>
+      <div class="match-info">
+        <span>⚽ Ida: ${o.fechaIda} · ${o.campoIda}</span>
+        <span>🔄 Vuelta: ${o.fechaVuelta}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Results table
+  const tb=document.getElementById('table-octavos-results');
+  if(addedResults.length===0){
+    tb.innerHTML='<tbody><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">No hay resultados aún</td></tr></tbody>';
+  } else {
+    renderResultsTable('table-octavos-results',addedResults,'Octavos');
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// GOLEADORES RENDER
+// ══════════════════════════════════════════════════════════
+function renderGoleadores(){
+  const maxGoles=GOLEADORES[0].goles;
+  const medals=['🥇','🥈','🥉'];
+  const top3Html=GOLEADORES.slice(0,3).map((g,i)=>`
+    <div style="background:var(--card2);border:1px solid ${['#ffd700','#c0c0c0','#cd7f32'][i]};
+         border-radius:10px;padding:16px;text-align:center">
+      <div style="font-size:32px">${medals[i]}</div>
+      <div style="font-family:'Bebas Neue';font-size:28px;color:${['var(--gold)','var(--silver)','var(--bronze)'][i]}">${g.goles}</div>
+      <div style="font-weight:700;font-size:12px;margin:4px 0">${g.jugador.split(',')[0]}</div>
+      <div style="font-size:10px;color:var(--muted)">${g.equipo}</div>
+    </div>`).join('');
+  document.getElementById('top-scorers-overview').innerHTML=top3Html;
+
+  const list=document.getElementById('scorers-list');
+  list.innerHTML=GOLEADORES.map((g,i)=>{
+    const posClass=i<3?`pos-${i+1}`:'pos-other';
+    const pct=Math.round((g.goles/maxGoles)*100);
+    return `<div class="scorer-card">
+      <div class="scorer-pos ${posClass}">${i<3?medals[i]:i+1}</div>
+      <div class="scorer-info">
+        <div class="scorer-name">${g.jugador}</div>
+        <div class="scorer-team">${g.equipo}</div>
+        <div class="goal-bar" style="margin-top:6px"><div class="goal-bar-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="scorer-stats">
+        <div>
+          <div class="scorer-goals">${g.goles}</div>
+          <div class="scorer-meta">goles</div>
+        </div>
+        <div>
+          <div style="font-family:'Bebas Neue';font-size:18px;color:var(--muted)">${g.media}</div>
+          <div class="scorer-meta">por PJ</div>
+        </div>
+        ${g.penaltis>0?`<div><div style="font-family:'Bebas Neue';font-size:16px;color:var(--accent3)">${g.penaltis}P</div><div class="scorer-meta">pen.</div></div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// BRACKET
+// ══════════════════════════════════════════════════════════
+function renderBracket(){
+  const rounds=[
+    {title:'16avos (Ida)',matches:IDA},
+    {title:'16avos (Vuelta)',matches:VUELTA},
+    {title:'Octavos',matches:OCTAVOS.map(o=>({local:o.local,visitante:o.visitante,gl:'?',gv:'?'}))},
+    {title:'Cuartos',matches:Array(4).fill({local:'Por definir',visitante:'Por definir',gl:'?',gv:'?'})},
+    {title:'Semifinal',matches:Array(2).fill({local:'Por definir',visitante:'Por definir',gl:'?',gv:'?'})},
+    {title:'Final',matches:[{local:'Por definir',visitante:'Por definir',gl:'?',gv:'?'}]},
+  ];
+  const container=document.getElementById('bracket-view');
+  container.innerHTML=rounds.map((rd,ri)=>`
+    <div class="bracket-round">
+      <div class="round-title">${rd.title}</div>
+      ${rd.matches.map((m,mi)=>{
+        const isPlayed=ri<2;
+        const lW=isPlayed&&m.gl>m.gv;const vW=isPlayed&&m.gv>m.gl;
+        return `<div class="match-card ${isPlayed?'':'match-pending'}">
+          <div class="match-team ${lW?'winner':''}">
+            <span class="match-team-name">${(m.local||'—').replace(' A"','').replace(' B"','').substring(0,22)}</span>
+            <span class="match-score">${m.gl}</span>
+          </div>
+          <div class="match-divider"></div>
+          <div class="match-team ${vW?'winner':''}">
+            <span class="match-team-name">${(m.visitante||'—').replace(' A"','').replace(' B"','').substring(0,22)}</span>
+            <span class="match-score">${m.gv}</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// ADD RESULT
+// ══════════════════════════════════════════════════════════
+// ── CALENDAR DATA: matches per phase ──────────────────────────────────────
+// Each entry: {local, visitante, fecha, campo}
+// Cuartos/Semis/Final are populated dynamically from previous round winners.
+const CALENDAR = {
+  'Octavos-Ida': OCTAVOS.map(o=>({local:o.local,visitante:o.visitante,fecha:o.fechaIda,campo:o.campoIda})),
+  'Octavos-Vuelta': OCTAVOS.map(o=>({local:o.visitante,visitante:o.local,fecha:o.fechaVuelta,campo:o.campoVuelta})),
+  'Cuartos-Ida': [],   // filled from bracket after Octavos
+  'Cuartos-Vuelta': [],
+  'Semifinal-Ida': [],
+  'Semifinal-Vuelta': [],
+  'Final': [],
+};
+
+// Build dynamic calendar entries as results come in
+function rebuildDynamicCalendar(){
+  // Cuartos teams = winners of octavos (from addedResults)
+  const oct8Winners = getOctavosWinners();
+  // Pair them: 1v2, 3v4, 5v6, 7v8
+  CALENDAR['Cuartos-Ida'] = [];
+  for(let i=0;i<oct8Winners.length;i+=2){
+    if(oct8Winners[i]&&oct8Winners[i+1]){
+      CALENDAR['Cuartos-Ida'].push({local:oct8Winners[i],visitante:oct8Winners[i+1],fecha:'07/06/2026',campo:'Por definir'});
+      CALENDAR['Cuartos-Vuelta'].push({local:oct8Winners[i+1],visitante:oct8Winners[i],fecha:'14/06/2026',campo:'Por definir'});
+    }
+  }
+}
+
+function getOctavosWinners(){
+  const winners=[];
+  OCTAVOS.forEach(o=>{
+    const idaR=addedResults.find(r=>r.fase==='Octavos-Ida'&&r.local===o.local);
+    const vueltaR=addedResults.find(r=>r.fase==='Octavos-Vuelta'&&r.local===o.visitante);
+    if(idaR&&vueltaR){
+      const totalLocal=idaR.gl+vueltaR.gv;   // o.local accumulates
+      const totalVisit=idaR.gv+vueltaR.gl;   // o.visitante accumulates
+      winners.push(totalLocal>=totalVisit?o.local:o.visitante);
+    } else {
+      winners.push(null); // not settled yet
+    }
+  });
+  return winners;
+}
+
+// ── FORM LOGIC ─────────────────────────────────────────────────────────────
+function populateTeamSelects(){
+  // Populate f-local with all teams (fallback for free entry phases)
+  const sel=document.getElementById('f-local');
+  sel.innerHTML=TEAMS.map(t=>`<option value="${t}">${t}</option>`).join('');
+  document.getElementById('f-visitante').innerHTML=sel.innerHTML;
+  // Trigger fase change to populate match picker
+  onFaseChange();
+}
+
+function onFaseChange(){
+  rebuildDynamicCalendar();
+  const fase=document.getElementById('f-fase').value;
+  const matches=CALENDAR[fase]||[];
+  const picker=document.getElementById('f-match-picker');
+  const hint=document.getElementById('calendar-hint');
+
+  picker.innerHTML='<option value="">— Selecciona un partido —</option>';
+
+  if(matches.length>0){
+    matches.forEach((m,i)=>{
+      const already=addedResults.find(r=>r.fase===fase&&r.local===m.local);
+      const label=`${m.local} vs ${m.visitante}${already?' ✅':''}`;
+      picker.innerHTML+=`<option value="${i}">${label}</option>`;
+    });
+    hint.textContent='Elige el partido del calendario — el visitante y campo se rellenan solos.';
+  } else {
+    picker.innerHTML='<option value="">Sin partidos fijados en esta fase aún</option>';
+    hint.textContent='Los cruces de esta fase se definirán cuando avance la copa. Puedes introducir los equipos manualmente.';
+  }
+
+  // Update local select with teams in this phase
+  const localSel=document.getElementById('f-local');
+  if(matches.length>0){
+    localSel.innerHTML=matches.map((m,i)=>`<option value="${i}">${m.local}</option>`).join('');
+    // Select first and trigger
+    localSel.selectedIndex=0;
+    onMatchPick();
+  } else {
+    // Free entry
+    localSel.innerHTML=TEAMS.map(t=>`<option value="${t}">${t}</option>`).join('');
+    document.getElementById('visitante-display').textContent='—';
+    document.getElementById('f-campo').value='';
+    document.getElementById('match-info-chip').style.display='none';
+  }
+}
+
+function onMatchPick(){
+  const fase=document.getElementById('f-fase').value;
+  const matches=CALENDAR[fase]||[];
+  const picker=document.getElementById('f-match-picker');
+  const idx=parseInt(picker.value);
+  if(isNaN(idx)||!matches[idx]) return;
+  applyMatch(matches[idx],fase);
+  // Sync local select
+  const localSel=document.getElementById('f-local');
+  for(let i=0;i<localSel.options.length;i++){
+    if(parseInt(localSel.options[i].value)===idx){localSel.selectedIndex=i;break;}
+  }
+}
+
+function onLocalChange(){
+  const fase=document.getElementById('f-fase').value;
+  const matches=CALENDAR[fase]||[];
+  if(matches.length===0) return; // free-entry mode
+  const idx=parseInt(document.getElementById('f-local').value);
+  if(!isNaN(idx)&&matches[idx]){
+    applyMatch(matches[idx],fase);
+    // Sync picker
+    document.getElementById('f-match-picker').value=String(idx);
+  }
+}
+
+function applyMatch(m,fase){
+  document.getElementById('visitante-display').textContent=m.visitante;
+  document.getElementById('f-visitante').value=m.visitante;
+  if(m.campo&&m.campo!=='Por definir') document.getElementById('f-campo').value=m.campo;
+  if(m.fecha) document.getElementById('f-fecha').value=convertDate(m.fecha);
+  // Info chip
+  const chip=document.getElementById('match-info-chip');
+  const already=addedResults.find(r=>r.fase===fase&&r.local===m.local);
+  chip.style.display='flex';
+  chip.innerHTML=`
+    <span>📅 ${m.fecha||'—'}</span>
+    <span>🏟️ ${m.campo||'—'}</span>
+    <span>🏠 <strong>${m.local}</strong></span>
+    <span>✈️ <strong>${m.visitante}</strong></span>
+    ${already?`<span style="color:var(--accent3)">⚠️ Ya registrado: ${already.gl}–${already.gv}</span>`:''}
+  `;
+}
+
+function convertDate(d){
+  // "23/05/2026" → "2026-05-23"
+  if(!d||!d.includes('/')) return '';
+  const [dd,mm,yyyy]=d.split('/');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function resetForm(){
+  document.getElementById('f-gl').value=0;
+  document.getElementById('f-gv').value=0;
+  document.getElementById('f-campo').value='';
+  document.getElementById('match-info-chip').style.display='none';
+  onFaseChange();
+}
+
+function addResult(){
+  const fase=document.getElementById('f-fase').value;
+  const fecha=document.getElementById('f-fecha').value;
+  const campo=document.getElementById('f-campo').value||'—';
+  const gl=parseInt(document.getElementById('f-gl').value)||0;
+  const gv=parseInt(document.getElementById('f-gv').value)||0;
+
+  // Get local + visitante depending on mode
+  const matches=CALENDAR[fase]||[];
+  let local,visitante;
+  if(matches.length>0){
+    const idx=parseInt(document.getElementById('f-local').value);
+    if(isNaN(idx)||!matches[idx]){alert('Selecciona un partido válido del calendario.');return;}
+    local=matches[idx].local;
+    visitante=matches[idx].visitante;
+  } else {
+    local=document.getElementById('f-local').value;
+    visitante=document.getElementById('f-visitante').value;
+    if(local===visitante){alert('Los equipos no pueden ser iguales');return;}
+  }
+  const r={fase,fecha,campo,local,visitante,gl,gv,id:Date.now()};
+  addedResults.push(r);
+  localStorage.setItem('copa_results',JSON.stringify(addedResults));
+  renderAddedList();
+  renderOctavos();
+  updateKPIs();
+  // Refresh picker so saved match shows ✅ and next match auto-selects
+  onFaseChange();
+  // Auto-advance to next unplayed match in same phase
+  const phaseMatches=CALENDAR[fase]||[];
+  const nextIdx=phaseMatches.findIndex(m=>!addedResults.find(r=>r.fase===fase&&r.local===m.local));
+  if(nextIdx>=0){
+    document.getElementById('f-local').selectedIndex=nextIdx;
+    document.getElementById('f-match-picker').value=String(nextIdx);
+    applyMatch(phaseMatches[nextIdx],fase);
+  }
+  document.getElementById('f-gl').value=0;
+  document.getElementById('f-gv').value=0;
+  const a=document.getElementById('form-alert');
+  a.innerHTML=`<div class="alert alert-success">✅ Resultado guardado: <strong>${local} ${gl}–${gv} ${visitante}</strong></div>`;
+  setTimeout(()=>a.innerHTML='',4000);
+}
+
+function deleteResult(id){
+  addedResults=addedResults.filter(r=>r.id!==id);
+  localStorage.setItem('copa_results',JSON.stringify(addedResults));
+  renderAddedList();renderOctavos();updateKPIs();
+}
+
+function renderAddedList(){
+  const el=document.getElementById('added-results-list');
+  if(addedResults.length===0){
+    el.innerHTML=`<div class="alert alert-info">Aún no hay resultados agregados.</div>`;return;
+  }
+  el.innerHTML=addedResults.map(r=>`
+    <div class="match-future" style="margin-bottom:8px">
+      <div class="match-header">${r.fase} · ${r.fecha||'—'} · ${r.campo}</div>
+      <div class="match-teams">
+        <div class="match-team-box">${r.local}</div>
+        <div class="match-vs" style="color:var(--accent)">${r.gl}—${r.gv}</div>
+        <div class="match-team-box">${r.visitante}</div>
+      </div>
+      <div style="text-align:right;margin-top:8px">
+        <button class="btn btn-danger" style="padding:4px 12px;font-size:11px" onclick="deleteResult(${r.id})">🗑 Eliminar</button>
+      </div>
+    </div>`).join('');
+}
+
+function updateKPIs(){
+  const allGoals=[...IDA,...VUELTA,...addedResults].reduce((s,m)=>s+m.gl+m.gv,0);
+  const allMatches=IDA.length+VUELTA.length+addedResults.length;
+  document.getElementById('kpi-goles').textContent=allGoals;
+  document.getElementById('kpi-partidos').textContent=allMatches;
+  document.getElementById('kpi-media').textContent=(allGoals/Math.max(allMatches,1)).toFixed(2);
+}
+
+// ══════════════════════════════════════════════════════════
+// CHARTS
+// ══════════════════════════════════════════════════════════
+Chart.defaults.color='#7a9bb5';
+Chart.defaults.borderColor='rgba(26,58,92,0.5)';
+Chart.defaults.font.family='Barlow';
+
+const palette=['#00e5a0','#00b8ff','#ff6b35','#ffd700','#c055ef','#ff1744','#00bcd4','#76ff03','#ff9800','#e91e63'];
+
+function mkChart(id,type,data,opts={}){
+  const ctx=document.getElementById(id);
+  if(!ctx)return;
+  return new Chart(ctx,{type,data,options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#7a9bb5',font:{size:11}}}},scales:type!=='pie'&&type!=='doughnut'?{x:{ticks:{color:'#7a9bb5',font:{size:10}},grid:{color:'rgba(26,58,92,0.4)'}},y:{ticks:{color:'#7a9bb5'},grid:{color:'rgba(26,58,92,0.4)'}}}:{},...opts}});
+}
+
+function buildCharts(){
+  const stats=computeTeamStats();
+
+  // Chart 1: Goles clasificados
+  const clTeams=CLASIFICADOS;
+  const clGF=clTeams.map(t=>stats[t]?.gf||0);
+  const clGC=clTeams.map(t=>stats[t]?.gc||0);
+  mkChart('chart-goles-equipo','bar',{
+    labels:clTeams.map(t=>t.split(' ').slice(-2).join(' ')),
+    datasets:[
+      {label:'GF',data:clGF,backgroundColor:palette[0]+'99',borderColor:palette[0],borderWidth:1},
+      {label:'GC',data:clGC,backgroundColor:palette[1]+'99',borderColor:palette[1],borderWidth:1},
+    ]
+  },{plugins:{legend:{position:'top'}}});
+
+  // Chart 2: Distribución resultados
+  const allM=[...IDA,...VUELTA];
+  const wins=allM.filter(m=>m.gl!==m.gv).length;
+  const draws=allM.filter(m=>m.gl===m.gv).length;
+  mkChart('chart-dist','doughnut',{
+    labels:['Victoria Local','Victoria Visitante','Empate'],
+    datasets:[{
+      data:[allM.filter(m=>m.gl>m.gv).length,allM.filter(m=>m.gv>m.gl).length,draws],
+      backgroundColor:['#00e5a0cc','#00b8ffcc','#ffd700cc'],
+      borderColor:['#00e5a0','#00b8ff','#ffd700'],borderWidth:2
+    }]
+  });
+
+  // Chart 3: GF vs GC all teams
+  const allTeams=Object.keys(stats).sort((a,b)=>stats[b].gf-stats[a].gf).slice(0,12);
+  mkChart('chart-gf-gc','bar',{
+    labels:allTeams.map(t=>t.split(' ').slice(-2).join(' ')),
+    datasets:[
+      {label:'GF',data:allTeams.map(t=>stats[t].gf),backgroundColor:'#00e5a066',borderColor:'#00e5a0',borderWidth:1},
+      {label:'GC',data:allTeams.map(t=>stats[t].gc),backgroundColor:'#ff174466',borderColor:'#ff1744',borderWidth:1},
+    ]
+  });
+
+  // Chart 4: Goles por jornada
+  const golesIda=IDA.reduce((s,m)=>s+m.gl+m.gv,0);
+  const golesVuelta=VUELTA.reduce((s,m)=>s+m.gl+m.gv,0);
+  mkChart('chart-jornadas','bar',{
+    labels:['Dieciseisavos Ida','Dieciseisavos Vuelta'],
+    datasets:[{
+      label:'Goles',
+      data:[golesIda,golesVuelta],
+      backgroundColor:['#00e5a099','#00b8ff99'],
+      borderColor:['#00e5a0','#00b8ff'],borderWidth:2,
+      borderRadius:8,
+    }]
+  },{plugins:{legend:{display:false}}});
+
+  // Chart 5: DG
+  const sorted=Object.entries(stats).sort((a,b)=>b[1].dg-a[1].dg);
+  mkChart('chart-dg','bar',{
+    labels:sorted.map(([t])=>t.split(' ').slice(-2).join(' ')),
+    datasets:[{
+      label:'Diferencia de Goles',
+      data:sorted.map(([,s])=>s.dg),
+      backgroundColor:sorted.map(([,s])=>s.dg>=0?'#00e5a099':'#ff174499'),
+      borderColor:sorted.map(([,s])=>s.dg>=0?'#00e5a0':'#ff1744'),
+      borderWidth:1,borderRadius:4,
+    }]
+  },{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7a9bb5',font:{size:9}}},y:{ticks:{color:'#7a9bb5'}}}});
+
+  // Chart 6: Eficiencia ofensiva
+  const effTeams=Object.entries(stats).sort((a,b)=>b[1].gf/b[1].pj-a[1].gf/a[1].pj).slice(0,12);
+  mkChart('chart-eficiencia','bar',{
+    labels:effTeams.map(([t])=>t.split(' ').slice(-2).join(' ')),
+    datasets:[{
+      label:'GF por Partido',
+      data:effTeams.map(([,s])=>parseFloat((s.gf/s.pj).toFixed(2))),
+      backgroundColor:palette.map(c=>c+'99'),
+      borderColor:palette,borderWidth:1,borderRadius:6,
+    }]
+  },{plugins:{legend:{display:false}}});
+
+  // Chart 7: Césped
+  mkChart('chart-cesped','doughnut',{
+    labels:['Césped Artificial','Césped Natural'],
+    datasets:[{data:[19,1],backgroundColor:['#00e5a0cc','#ffd700cc'],borderColor:['#00e5a0','#ffd700'],borderWidth:2}]
+  });
+
+  // Chart 8: Días
+  const dias={'07/05':1,'08/05':2,'09/05':5,'10/05':1,'15/05':6,'16/05':1,'17/05':3};
+  mkChart('chart-dias','bar',{
+    labels:Object.keys(dias),
+    datasets:[{label:'Partidos',data:Object.values(dias),backgroundColor:'#c055ef99',borderColor:'#c055ef',borderWidth:1,borderRadius:4}]
+  },{plugins:{legend:{display:false}}});
+
+  // Chart 9: Intensidad (goles por partido)
+  const golesPerMatch=[...IDA,...VUELTA].map(m=>m.gl+m.gv).sort((a,b)=>a-b);
+  const freqMap={};golesPerMatch.forEach(g=>{freqMap[g]=(freqMap[g]||0)+1});
+  mkChart('chart-intensidad','bar',{
+    labels:Object.keys(freqMap).map(k=>k+' goles'),
+    datasets:[{label:'Partidos',data:Object.values(freqMap),backgroundColor:'#ff6b3599',borderColor:'#ff6b35',borderWidth:1,borderRadius:4}]
+  },{plugins:{legend:{display:false}}});
+
+  // Chart 10: Top 10 goleadores
+  const top10=GOLEADORES.slice(0,10);
+  mkChart('chart-top10','bar',{
+    labels:top10.map(g=>g.jugador.split(',')[0]),
+    datasets:[{
+      label:'Goles',data:top10.map(g=>g.goles),
+      backgroundColor:top10.map((_,i)=>i===0?'#ffd70099':i===1?'#c0c0c099':i===2?'#cd7f3299':palette[i%palette.length]+'99'),
+      borderColor:top10.map((_,i)=>i===0?'#ffd700':i===1?'#c0c0c0':i===2?'#cd7f32':palette[i%palette.length]),
+      borderWidth:2,borderRadius:6,
+    }]
+  },{plugins:{legend:{display:false}},indexAxis:'y'});
+
+  // Chart 11: Goles por equipo total
+  const teamGoals={};
+  GOLEADORES.forEach(g=>{teamGoals[g.equipo]=(teamGoals[g.equipo]||0)+g.goles});
+  const tgSorted=Object.entries(teamGoals).sort((a,b)=>b[1]-a[1]);
+  mkChart('chart-goles-team-total','bar',{
+    labels:tgSorted.map(([t])=>t.split(' ').slice(-2).join(' ')),
+    datasets:[{
+      label:'Goles',data:tgSorted.map(([,g])=>g),
+      backgroundColor:palette.map(c=>c+'99'),borderColor:palette,borderWidth:1,borderRadius:4
+    }]
+  },{plugins:{legend:{display:false}}});
+
+  // Chart 12: Media goles top 15
+  const top15=GOLEADORES.slice(0,15);
+  mkChart('chart-media-gol','bar',{
+    labels:top15.map(g=>g.jugador.split(',')[0]),
+    datasets:[{
+      label:'Media G/PJ',data:top15.map(g=>g.media),
+      backgroundColor:'#00b8ff66',borderColor:'#00b8ff',borderWidth:1,borderRadius:4
+    }]
+  },{plugins:{legend:{display:false}},indexAxis:'y'});
+
+  // Chart 13: Penaltis
+  const conPen=GOLEADORES.filter(g=>g.penaltis>0);
+  mkChart('chart-penaltis','doughnut',{
+    labels:['Sin Penalti','Con Penalti'],
+    datasets:[{
+      data:[GOLEADORES.length-conPen.length,conPen.length],
+      backgroundColor:['#00e5a099','#ffd70099'],
+      borderColor:['#00e5a0','#ffd700'],borderWidth:2
+    }]
+  });
+
+  // Chart 14: Goles Ida vs Vuelta por equipo
+  const idaMap={},vueltaMap={};
+  IDA.forEach(m=>{idaMap[m.local]=(idaMap[m.local]||0)+m.gl;idaMap[m.visitante]=(idaMap[m.visitante]||0)+m.gv});
+  VUELTA.forEach(m=>{vueltaMap[m.local]=(vueltaMap[m.local]||0)+m.gl;vueltaMap[m.visitante]=(vueltaMap[m.visitante]||0)+m.gv});
+  const allTeamsIV=Array.from(new Set([...Object.keys(idaMap),...Object.keys(vueltaMap)])).filter(t=>Object.keys(stats).includes(t)).slice(0,10);
+  mkChart('chart-ida-vuelta-eq','bar',{
+    labels:allTeamsIV.map(t=>t.split(' ').slice(-2).join(' ')),
+    datasets:[
+      {label:'Goles Ida',data:allTeamsIV.map(t=>idaMap[t]||0),backgroundColor:'#00e5a066',borderColor:'#00e5a0',borderWidth:1},
+      {label:'Goles Vuelta',data:allTeamsIV.map(t=>vueltaMap[t]||0),backgroundColor:'#00b8ff66',borderColor:'#00b8ff',borderWidth:1},
+    ]
+  });
+
+  // Chart 15: Radar top equipos
+  const radarTeams=['REAL UNION TENERIFE S/C B','C.D. SAUZAL SABATER A','SAN FERNANDO REY C.F. A','S.D. VALLESECO B','ESFERICO F.C. B'];
+  const radarColors=['#00e5a0','#00b8ff','#ffd700','#ff6b35','#c055ef'];
+  mkChart('chart-radar','radar',{
+    labels:['GF','GF/PJ','DG','PG','Ofensiva'],
+    datasets:radarTeams.map((t,i)=>{
+      const s=stats[t]||{pj:0,pg:0,gf:0,gc:0,dg:0};
+      const maxGF=13,maxPJ=2;
+      return {
+        label:t.split(' ').slice(-2).join(' '),
+        data:[
+          Math.min((s.gf/maxGF)*10,10),
+          Math.min((s.gf/Math.max(s.pj,1))*5,10),
+          Math.min((s.dg+11)/22*10,10),
+          s.pg*5,
+          Math.min((s.gf/Math.max(s.gc,0.5))*5,10)
+        ],
+        borderColor:radarColors[i],backgroundColor:radarColors[i]+'22',
+        pointBackgroundColor:radarColors[i],borderWidth:2,
+      };
+    })
+  },{scales:{r:{ticks:{display:false},grid:{color:'rgba(26,58,92,0.6)'},pointLabels:{color:'#7a9bb5',font:{size:11}}}}});
+}
+
+// ══════════════════════════════════════════════════════════
+// TAB NAVIGATION
+// ══════════════════════════════════════════════════════════
+function showTab(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  // Floating balls animation
+  const bg=document.querySelector('.football-bg');
+  for(let i=0;i<8;i++){
+    const b=document.createElement('div');
+    b.className='ball';b.textContent='⚽';
+    b.style.top=`${Math.random()*80+10}%`;
+    b.style.animationDuration=`${8+Math.random()*12}s`;
+    b.style.animationDelay=`${-Math.random()*20}s`;
+    b.style.fontSize=`${16+Math.random()*20}px`;
+    bg.appendChild(b);
+  }
+  // Stars
+  for(let i=0;i<40;i++){
+    const s=document.createElement('div');
+    s.className='stars';
+    s.style.left=`${Math.random()*100}%`;
+    s.style.top=`${Math.random()*100}%`;
+    s.style.animationDelay=`${Math.random()*3}s`;
+    bg.appendChild(s);
+  }
+
+  // Load from Excel API first, then render
+  loadFromAPI().then(() => {
+    renderResultsTable('table-ida',IDA,'Ida');
+    renderResultsTable('table-vuelta',VUELTA,'Vuelta');
+    renderGlobalTable();
+    renderStatsTable();
+    renderOctavos();
+    renderGoleadores();
+    renderBracket();
+    populateTeamSelects();
+    renderAddedList();
+    updateKPIs();
+    buildCharts();
+  });
+
+  // Set today's date
+  document.getElementById('f-fecha').valueAsDate=new Date();
+});
+</script>
+</body>
+</html>
