@@ -468,6 +468,52 @@ header{
 }
 #f-match-picker:focus{border-color:var(--accent)}
 #match-info-chip{display:none;margin-bottom:16px;padding:10px 14px;background:rgba(0,184,255,0.08);border:1px solid rgba(0,184,255,0.3);border-radius:8px;font-size:12px;color:var(--accent2);gap:20px;flex-wrap:wrap}
+/* ════════════════ ADMIN MODAL ════════════════ */
+.modal-overlay{
+  position:fixed;inset:0;z-index:1000;
+  background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;
+  animation:fadeIn 0.2s ease;
+}
+.modal-box{
+  background:var(--card);border:1px solid var(--accent);
+  border-radius:16px;padding:32px;width:360px;max-width:90vw;
+  box-shadow:0 0 60px rgba(0,229,160,0.2);
+  animation:slideUp 0.25s ease;
+}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-title{
+  font-family:'Bebas Neue',sans-serif;font-size:28px;
+  letter-spacing:3px;color:var(--accent);margin-bottom:6px;
+  text-align:center;
+}
+.modal-sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:24px}
+.modal-input{
+  width:100%;background:var(--card2);border:1px solid var(--border);
+  color:var(--text);border-radius:8px;padding:12px 16px;
+  font-family:'Barlow',sans-serif;font-size:15px;
+  outline:none;transition:border-color 0.2s;
+  text-align:center;letter-spacing:4px;
+}
+.modal-input:focus{border-color:var(--accent)}
+.modal-error{color:var(--red-team);font-size:12px;text-align:center;margin-top:8px;min-height:18px}
+.modal-btns{display:flex;gap:10px;margin-top:18px}
+/* Admin badge shown when logged in */
+.admin-badge{
+  display:none;align-items:center;gap:6px;
+  background:rgba(0,229,160,0.1);border:1px solid var(--accent);
+  border-radius:20px;padding:5px 14px;font-size:11px;
+  font-weight:700;color:var(--accent);letter-spacing:1px;
+  text-transform:uppercase;cursor:pointer;
+}
+.admin-badge.visible{display:flex}
+/* Live poll indicator */
+.poll-dot{
+  width:7px;height:7px;background:var(--accent2);border-radius:50%;
+  display:inline-block;animation:blink 2s ease-in-out infinite;
+}
+
 /* Scroll */
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:var(--dark)}
@@ -517,6 +563,10 @@ header{
     <div class="live-badge">
       <div class="live-dot"></div>
       Temporada Activa
+      &nbsp;&nbsp;<span class="poll-dot" title="Sincronizando en vivo"></span>
+    </div>
+    <div class="admin-badge" id="admin-badge" onclick="logoutAdmin()" title="Click para cerrar sesión">
+      ⚡ ADMIN &nbsp;·&nbsp; Cerrar sesión
     </div>
   </div>
 </header>
@@ -529,7 +579,8 @@ header{
   <button class="nav-tab" onclick="showTab('stats')">📊 Estadísticas</button>
   <button class="nav-tab" onclick="showTab('goleadores')">🥅 Goleadores</button>
   <button class="nav-tab" onclick="showTab('octavos')">🔜 Octavos</button>
-  <button class="nav-tab" onclick="showTab('agregar')">➕ Agregar Resultado</button>
+  <button class="nav-tab" id="nav-agregar" onclick="showTab('agregar')" style="display:none">➕ Admin</button>
+  <button class="nav-tab" onclick="showAdminLogin()" id="nav-login">🔐 Admin</button>
 </nav>
 
 <div class="main">
@@ -759,10 +810,13 @@ header{
 
 <!-- ═══════════════ TAB: AGREGAR ═══════════════ -->
 <div id="tab-agregar" class="section">
-  <div class="section-title">➕ Agregar Resultado</div>
+  <div class="section-title">⚡ Panel Admin</div>
   <div id="form-alert"></div>
+  <div id="readonly-notice" class="alert alert-info" style="margin-bottom:16px">
+    🔐 Esta sección es solo para el administrador. Si eres el admin, pulsa el botón <strong>Admin</strong> en el menú superior para iniciar sesión.
+  </div>
 
-  <div class="add-form">
+  <div class="add-form" id="admin-add-form" style="display:none">
     <div class="form-title">⚽ Nuevo Resultado</div>
 
     <!-- Fase + Fecha + Campo -->
@@ -954,13 +1008,80 @@ let GOLEADORES = [
 ];
 
 // Added results storage
-// Version guard: clear old data if format changed
-const DATA_VERSION = 'v2';
-if(localStorage.getItem('copa_data_version') !== DATA_VERSION){
-  localStorage.removeItem('copa_results');
-  localStorage.setItem('copa_data_version', DATA_VERSION);
+// ── ADMIN STATE ──────────────────────────────────────────────────────────
+let isAdmin = false;
+let adminPassword = '';
+
+function showAdminLogin(){
+  document.getElementById('admin-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('admin-pwd-input').focus(),100);
 }
-let addedResults = JSON.parse(localStorage.getItem('copa_results') || '[]');
+function closeAdminModal(){
+  document.getElementById('admin-modal').style.display='none';
+  document.getElementById('admin-pwd-input').value='';
+  document.getElementById('admin-modal-error').textContent='';
+}
+async function doLogin(){
+  const pwd = document.getElementById('admin-pwd-input').value.trim();
+  if(!pwd){ document.getElementById('admin-modal-error').textContent='Introduce la contraseña'; return; }
+  // Test password against the save endpoint with a dry-run GET
+  const res = await fetch('/api/save',{
+    method:'GET',
+    headers:{'x-admin-password':pwd}
+  });
+  if(res.ok){
+    isAdmin = true;
+    adminPassword = pwd;
+    closeAdminModal();
+    // Show admin tab + badge, hide login button
+    document.getElementById('nav-agregar').style.display='';
+    document.getElementById('nav-login').style.display='none';
+    document.getElementById('admin-badge').classList.add('visible');
+    showAlert('✅ Sesión admin iniciada. Ya puedes añadir resultados.','success');
+  } else {
+    document.getElementById('admin-modal-error').textContent='❌ Contraseña incorrecta';
+    document.getElementById('admin-pwd-input').value='';
+  }
+}
+function logoutAdmin(){
+  if(!confirm('¿Cerrar sesión de administrador?')) return;
+  isAdmin = false; adminPassword = '';
+  document.getElementById('nav-agregar').style.display='none';
+  document.getElementById('nav-login').style.display='';
+  document.getElementById('admin-badge').classList.remove('visible');
+  showAlert('Sesión cerrada.','info');
+}
+function showAlert(msg, type='success'){
+  const a = document.getElementById('form-alert');
+  if(!a) return;
+  a.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+  setTimeout(()=>{ if(a) a.innerHTML=''; }, 4000);
+}
+
+// ── LIVE RESULTS from Vercel KV ──────────────────────────────────────────
+let addedResults = [];
+let pollInterval = null;
+
+async function fetchLiveResults(){
+  try {
+    const res = await fetch('/api/results', {cache:'no-store'});
+    if(!res.ok) return;
+    const data = await res.json();
+    if(data.results && JSON.stringify(data.results) !== JSON.stringify(addedResults)){
+      addedResults = data.results;
+      // Re-render all dynamic sections silently
+      renderAddedList();
+      renderOctavos();
+      renderBracket();
+      updateKPIs();
+    }
+  } catch(e){ /* offline / KV not configured — use empty */ }
+}
+
+function startPolling(){
+  fetchLiveResults(); // immediate first fetch
+  pollInterval = setInterval(fetchLiveResults, 15000); // every 15s
+}
 
 // ── EXCEL API INTEGRATION ──────────────────────────────────────────────────
 // Tracks whether live data was loaded from the API
@@ -1632,7 +1753,7 @@ function resetForm(){
   onFaseChange();
 }
 
-function addResult(){
+async function addResult(){
   const fase=document.getElementById('f-fase').value;
   const fecha=document.getElementById('f-fecha').value;
   const campo=document.getElementById('f-campo').value||'—';
@@ -1652,34 +1773,59 @@ function addResult(){
     visitante=document.getElementById('f-visitante').value;
     if(local===visitante){alert('Los equipos no pueden ser iguales');return;}
   }
-  const r={fase,fecha,campo,local,visitante,gl,gv,id:Date.now()};
-  addedResults.push(r);
-  localStorage.setItem('copa_results',JSON.stringify(addedResults));
-  renderAddedList();
-  renderOctavos();
-  renderBracket();   // ← real-time bracket update
-  updateKPIs();
-  // Refresh picker so saved match shows ✅ and next match auto-selects
-  onFaseChange();
-  // Auto-advance to next unplayed match in same phase
-  const phaseMatches=CALENDAR[fase]||[];
-  const nextIdx=phaseMatches.findIndex(m=>!addedResults.find(r=>r.fase===fase&&r.local===m.local));
-  if(nextIdx>=0){
-    document.getElementById('f-local').selectedIndex=nextIdx;
-    document.getElementById('f-match-picker').value=String(nextIdx);
-    applyMatch(phaseMatches[nextIdx],fase);
+  if(!isAdmin){ showAlert('⚠️ Debes iniciar sesión como admin primero.','info'); return; }
+
+  const body = {fase,fecha,campo,local,visitante,gl,gv};
+  const btn = document.querySelector('.btn-primary');
+  if(btn){ btn.disabled=true; btn.textContent='Guardando...'; }
+
+  try {
+    const res = await fetch('/api/save',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-password':adminPassword},
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error||'Error al guardar');
+
+    // Refresh from server immediately
+    await fetchLiveResults();
+    onFaseChange();
+
+    // Auto-advance to next unplayed match
+    const phaseMatches=CALENDAR[fase]||[];
+    const nextIdx=phaseMatches.findIndex(m=>!addedResults.find(r=>r.fase===fase&&r.local===m.local));
+    if(nextIdx>=0){
+      document.getElementById('f-local').selectedIndex=nextIdx;
+      document.getElementById('f-match-picker').value=String(nextIdx);
+      applyMatch(phaseMatches[nextIdx],fase);
+    }
+    document.getElementById('f-gl').value=0;
+    document.getElementById('f-gv').value=0;
+    showAlert(`✅ Resultado guardado: <strong>${local} ${gl}–${gv} ${visitante}</strong>`);
+  } catch(e) {
+    showAlert(`❌ Error: ${e.message}`, 'info');
+  } finally {
+    if(btn){ btn.disabled=false; btn.textContent='✅ Guardar Resultado'; }
   }
-  document.getElementById('f-gl').value=0;
-  document.getElementById('f-gv').value=0;
-  const a=document.getElementById('form-alert');
-  a.innerHTML=`<div class="alert alert-success">✅ Resultado guardado: <strong>${local} ${gl}–${gv} ${visitante}</strong></div>`;
-  setTimeout(()=>a.innerHTML='',4000);
 }
 
-function deleteResult(id){
-  addedResults=addedResults.filter(r=>r.id!==id);
-  localStorage.setItem('copa_results',JSON.stringify(addedResults));
-  renderAddedList();renderOctavos();renderBracket();updateKPIs();
+async function deleteResult(id){
+  if(!isAdmin){ showAlert('Solo el admin puede eliminar resultados.','info'); return; }
+  if(!confirm('¿Eliminar este resultado?')) return;
+  try {
+    const res = await fetch('/api/save',{
+      method:'DELETE',
+      headers:{'Content-Type':'application/json','x-admin-password':adminPassword},
+      body: JSON.stringify({id})
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error||'Error al eliminar');
+    await fetchLiveResults();
+    showAlert('🗑 Resultado eliminado.');
+  } catch(e){
+    showAlert(`❌ ${e.message}`,'info');
+  }
 }
 
 function renderAddedList(){
@@ -1696,7 +1842,7 @@ function renderAddedList(){
         <div class="match-team-box">${r.visitante}</div>
       </div>
       <div style="text-align:right;margin-top:8px">
-        <button class="btn btn-danger" style="padding:4px 12px;font-size:11px" onclick="deleteResult(${r.id})">🗑 Eliminar</button>
+        ${isAdmin ? `<button class="btn btn-danger" style="padding:4px 12px;font-size:11px" onclick="deleteResult(${r.id})">🗑 Eliminar</button>` : ''}
       </div>
     </div>`).join('');
 }
@@ -1912,6 +2058,13 @@ function showTab(id){
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
   event.target.classList.add('active');
+  // Toggle admin form visibility
+  if(id==='agregar'){
+    const form  = document.getElementById('admin-add-form');
+    const notice= document.getElementById('readonly-notice');
+    if(form)   form.style.display   = isAdmin ? '' : 'none';
+    if(notice) notice.style.display = isAdmin ? 'none' : '';
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1956,7 +2109,27 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   // Set today's date
   document.getElementById('f-fecha').valueAsDate=new Date();
+
+  // Start live polling (all users)
+  startPolling();
 });
 </script>
+<!-- Admin login modal -->
+<div class="modal-overlay" id="admin-modal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title">🔐 Acceso Admin</div>
+    <div class="modal-sub">Introduce la contraseña para gestionar resultados</div>
+    <input class="modal-input" type="password" id="admin-pwd-input"
+      placeholder="••••••••" maxlength="40"
+      onkeydown="if(event.key==='Enter')doLogin()"
+      autocomplete="current-password">
+    <div class="modal-error" id="admin-modal-error"></div>
+    <div class="modal-btns">
+      <button class="btn" style="flex:1;background:rgba(122,155,181,0.1);color:var(--muted)"
+        onclick="closeAdminModal()">Cancelar</button>
+      <button class="btn btn-primary" style="flex:1" onclick="doLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
